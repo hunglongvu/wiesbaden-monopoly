@@ -5,7 +5,7 @@ import cors from 'cors';
 import { setupGameSocket } from './socket/gameSocket';
 
 const PORT = process.env.PORT || 3001;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://https://wiesbaden-monopoly-client.vercel.app';
 
 const app = express();
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
