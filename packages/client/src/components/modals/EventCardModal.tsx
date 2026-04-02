@@ -133,7 +133,7 @@ export default function EventCardModal({
             </div>
           )}
 
-          {/* Action button */}
+          {/* Pay button for tax/repair */}
           {isMyTurn && pending && (
             <button onClick={handlePay} style={{
               width: '100%', padding: '11px', border: 'none', borderRadius: 10,
@@ -147,13 +147,19 @@ export default function EventCardModal({
             </button>
           )}
 
-          {/* Card auto-resolves (no button needed) or other player */}
-          {(!isMyTurn || !pending) && (
-            <div style={{
-              textAlign: 'center', fontSize: 11, color: '#546a8a', fontStyle: 'italic',
-            }}>
-              {isMyTurn ? 'Wird automatisch verarbeitet…' : `Warte auf ${playerName}…`}
-            </div>
+          {/* Confirm button for card events */}
+          {type === 'card' && (
+            <button onClick={onClose} style={{
+              width: '100%', padding: '11px', border: 'none', borderRadius: 10,
+              background: (deckStyle?.accent ?? '#22d3a3') + 'cc',
+              color: '#000', cursor: 'pointer',
+              fontWeight: 800, fontSize: 14, fontFamily: 'inherit',
+              transition: 'transform 0.1s',
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
+            onMouseUp={(e)   => (e.currentTarget.style.transform = 'scale(1)')}>
+              ✓ Verstanden
+            </button>
           )}
         </div>
       </div>

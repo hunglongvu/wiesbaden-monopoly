@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GameState, Tile, PropertyTile, RailroadTile, UtilityTile, Player } from '../types';
 import { playStep } from '../sounds';
 
-const CORNER = 72;
-const SIDE   = 57;
+const CORNER = 78;
+const SIDE   = 62;
 const BOARD  = CORNER * 2 + SIDE * 9;
 
 const COLOR_HEX: Record<string, string> = {
@@ -15,6 +15,49 @@ const COLOR_HEX: Record<string, string> = {
   yellow:   '#eab308',
   green:    '#22c55e',
   darkblue: '#3b82f6',
+};
+
+const TILE_EMOJI: Record<number, string> = {
+  0:  '🏁',   // Los
+  1:  '🏚️',  // Biebricher Allee
+  2:  '📦',   // Gemeinschaftskarte
+  3:  '🏠',   // Schiersteiner Straße
+  4:  '💸',   // Einkommensteuer
+  5:  '🚂',   // Hauptbahnhof Wiesbaden
+  6:  '🌊',   // Wilhelmstraße
+  7:  '❓',   // Ereigniskarte
+  8:  '🌅',   // Luisenstraße
+  9:  '🌉',   // Rheinstraße
+  10: '⚖️',  // Gefängnisbesuch
+  11: '🌸',   // Taunusstraße
+  12: '⚡',   // Stadtwerke Wiesbaden
+  13: '🌺',   // Sonnenberger Straße
+  14: '🌼',   // Adolfsallee
+  15: '🚆',   // Bahnhof Biebrich
+  16: '🛒',   // Marktstraße
+  17: '📦',   // Gemeinschaftskarte
+  18: '🍊',   // Friedrichstraße
+  19: '⛪',   // Kirchgasse
+  20: '🅿️',  // Freiparken
+  21: '🔴',   // Bleichstraße
+  22: '❓',   // Ereigniskarte
+  23: '🥇',   // Goldgasse
+  24: '🛣️',  // Langgasse
+  25: '🚃',   // Bahnhof Klarenthal
+  26: '👑',   // Kaiser-Friedrich-Ring
+  27: '🏖️',  // Rheinufer
+  28: '🛁',   // Wiesbadener Therme
+  29: '⭐',   // Dernsches Gelände
+  30: '👮',   // Gehe ins Gefängnis
+  31: '🌿',   // Nerotal
+  32: '🏔️',  // Neroberg
+  33: '📦',   // Gemeinschaftskarte
+  34: '🏞️',  // Reisinger-Anlagen
+  35: '🚊',   // Bahnhof Dotzheim
+  36: '❓',   // Ereigniskarte
+  37: '🏛️',  // Kurhaus-Kolonnaden
+  38: '💎',   // Luxussteuer
+  39: '🏰',   // Schlossplatz
 };
 
 const PLAYER_ICONS = ['▲', '■', '●', '◆'];
@@ -116,12 +159,7 @@ function TileCell({
   const houses = tile.type === 'property' ? (tile as PropertyTile).houses : 0;
   const visiblePlayers = players.filter((p) => !p.isBankrupt && displayPos[p.id] === pos);
 
-  const ICONS: Record<string, string> = {
-    go: '🏁', jail: '⚖', go_to_jail: '👮', free_parking: '🅿',
-    chance: '?', community_chest: '📦', tax: '💸', railroad: '🚂', utility: '⚡',
-  };
-  const icon  = ICONS[tile.type] ?? '';
-  const label = isCorner ? tile.name : tile.name.length > 9 ? tile.name.slice(0, 8) + '…' : tile.name;
+  const tileEmoji = TILE_EMOJI[pos] ?? '';
 
   return (
     <div style={{
@@ -141,7 +179,7 @@ function TileCell({
       {/* Owner dot */}
       {ownerColor && (
         <div style={{
-          position: 'absolute', top: 10, right: 3, width: 6, height: 6,
+          position: 'absolute', top: 10, right: 3, width: 7, height: 7,
           borderRadius: '50%', background: ownerColor, zIndex: 2,
           boxShadow: `0 0 5px ${ownerColor}88`,
         }} />
@@ -151,17 +189,21 @@ function TileCell({
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: 2, paddingTop: propColor ? 11 : 4,
+        justifyContent: 'center', padding: 2, paddingTop: propColor ? 12 : 4,
         opacity: isMortgaged ? 0.4 : 1, gap: 1,
       }}>
-        {icon && (
-          <div style={{ fontSize: isCorner ? 20 : 11, lineHeight: 1 }}>{icon}</div>
+        {isCorner ? (
+          <>
+            <div style={{ fontSize: 22, lineHeight: 1 }}>{tileEmoji}</div>
+            <div style={{
+              fontSize: 8, fontWeight: 700, textAlign: 'center',
+              color: '#c8d8f0', lineHeight: 1.25,
+              wordBreak: 'break-word', maxWidth: '100%', padding: '0 2px',
+            }}>{tile.name}</div>
+          </>
+        ) : (
+          <div style={{ fontSize: 18, lineHeight: 1 }}>{tileEmoji}</div>
         )}
-        <div style={{
-          fontSize: isCorner ? 7.5 : 6.5, fontWeight: 600, textAlign: 'center',
-          color: isCorner ? '#c8d8f0' : '#8899b4', lineHeight: 1.25,
-          wordBreak: 'break-word', maxWidth: '100%', padding: '0 2px',
-        }}>{label}</div>
 
         {houses > 0 && (
           <div style={{ display: 'flex', gap: 1, marginTop: 1 }}>
@@ -186,10 +228,10 @@ function TileCell({
             const isMe = p.id === myPlayerId;
             return (
               <div key={p.id} title={p.name} style={{
-                width: 13, height: 13, borderRadius: '50%', background: p.color,
+                width: 15, height: 15, borderRadius: '50%', background: p.color,
                 border: isMe ? '2px solid #fff' : '1.5px solid rgba(255,255,255,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 6, fontWeight: 800, color: '#fff', flexShrink: 0,
+                fontSize: 7, fontWeight: 800, color: '#fff', flexShrink: 0,
                 animation: isLanding ? 'tokenLand 0.6s cubic-bezier(0.36,0.07,0.19,0.97) both' : 'none',
                 boxShadow: isMe ? `0 0 6px ${p.color}` : 'none',
               }}>
@@ -232,8 +274,23 @@ export default function Board({ gameState, myPlayerId }: { gameState: GameState;
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', gap: 12, background: '#0a1525', padding: 16,
       }}>
+        {/* Latest event display */}
+        {gameState.eventLog.length > 0 && (
+          <div key={gameState.eventLog.length} style={{
+            fontSize: 12, color: '#22d3a3', textAlign: 'center',
+            animation: 'slideUp 0.3s ease both',
+            maxWidth: 260, lineHeight: 1.5,
+            background: 'rgba(34,211,163,0.08)',
+            border: '1px solid rgba(34,211,163,0.2)',
+            borderRadius: 8, padding: '7px 14px',
+            fontWeight: 600,
+          }}>
+            {gameState.eventLog[gameState.eventLog.length - 1]}
+          </div>
+        )}
+
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#e84393', letterSpacing: '0.12em' }}>
+          <div style={{ fontSize: 30, fontWeight: 900, color: '#e84393', letterSpacing: '0.12em' }}>
             WIESBADEN
           </div>
           <div style={{ fontSize: 10, color: '#546a8a', letterSpacing: '0.4em', marginTop: 3 }}>

@@ -10,7 +10,7 @@ const socket_io_1 = require("socket.io");
 const cors_1 = __importDefault(require("cors"));
 const gameSocket_1 = require("./socket/gameSocket");
 const PORT = process.env.PORT || 3001;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://https://wiesbaden-monopoly-client.vercel.app';
 const app = (0, express_1.default)();
 exports.app = app;
 app.use((0, cors_1.default)({ origin: CLIENT_ORIGIN, credentials: true }));

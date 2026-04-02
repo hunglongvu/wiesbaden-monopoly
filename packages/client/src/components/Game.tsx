@@ -4,7 +4,6 @@ import { GameState, PropertyTile } from '../types';
 import Board from './Board';
 import PlayerPanel from './PlayerPanel';
 import ActionPanel from './ActionPanel';
-import MiniLog from './MiniLog';
 import AuctionModal from './modals/AuctionModal';
 import TradeModal from './modals/TradeModal';
 import MortgageModal from './modals/MortgageModal';
@@ -84,10 +83,6 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
     if (key !== shownCardRef.current) {
       shownCardRef.current = key;
       setShowCardModal(true);
-      // Auto-close after 4s if not the active player (who must confirm)
-      if (evt.drawnBy !== myPlayerId) {
-        setTimeout(() => setShowCardModal(false), 4000);
-      }
     }
   }, [gameState.lastCardEvent, myPlayerId]);
 
@@ -111,7 +106,7 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
 
   const activePlayer = players.find((p) => p.id === currentTurn.playerId);
 
-  const BOARD_SIZE = 657;
+  const BOARD_SIZE = 714;
   const boardScale = Math.min(1, (windowWidth - 8) / BOARD_SIZE);
 
   // ── Shared modals (work in both layouts since position: fixed) ──────────────
@@ -301,9 +296,6 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
           ))}
         </div>
 
-        {/* MiniLog, fixed position works regardless of layout */}
-        <MiniLog events={gameState.eventLog} />
-
         {/* All modals (position: fixed, work in both layouts) */}
         {modals}
       </div>
@@ -373,9 +365,6 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
           />
         </div>
       </div>
-
-      {/* Mini log – bottom center, last 3 events */}
-      <MiniLog events={gameState.eventLog} />
 
       {/* ── Modals ─────────────────────────────────────────────────────── */}
       {modals}
