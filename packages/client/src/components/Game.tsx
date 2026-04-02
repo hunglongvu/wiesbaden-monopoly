@@ -82,7 +82,9 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
     const key = `${evt.drawnBy}-${evt.card.id}`;
     if (key !== shownCardRef.current) {
       shownCardRef.current = key;
-      setShowCardModal(true);
+      if (evt.drawnBy === myPlayerId) {
+        setShowCardModal(true);
+      }
     }
   }, [gameState.lastCardEvent, myPlayerId]);
 
