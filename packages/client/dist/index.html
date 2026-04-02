@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="WI Monopoly" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="theme-color" content="#e84393" />
+    <title>Wiesbaden Monopoly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --safe-top:    env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left:   env(safe-area-inset-left, 0px);
+        --safe-right:  env(safe-area-inset-right, 0px);
+        --bg:       #0b1120;
+        --surface:  #111827;
+        --surface2: #1a2540;
+        --border:   #1e3a5f;
+        --border2:  #243a5e;
+        --text:     #e8edf5;
+        --text2:    #8899b4;
+        --text3:    #546a8a;
+        --accent:   #e84393;
+        --green:    #22d3a3;
+        --yellow:   #f5a623;
+        --red:      #ef4444;
+        --blue:     #3b82f6;
+      }
+
+      html { height: 100%; }
+      body {
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100%;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior: none;
+      }
+      #root { width: 100%; min-height: 100dvh; }
+      input, button, select { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideLeft {
+        from { opacity: 0; transform: translateX(18px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes tokenLand {
+        0%   { transform: scale(1); }
+        30%  { transform: scale(1.7) translateY(-5px); }
+        55%  { transform: scale(0.85); }
+        75%  { transform: scale(1.15); }
+        100% { transform: scale(1); }
+      }
+      @keyframes tokenHop {
+        0%   { transform: scale(1) translateY(0); }
+        50%  { transform: scale(1.3) translateY(-4px); }
+        100% { transform: scale(1) translateY(0); }
+      }
+      @keyframes diceSpin {
+        0%   { transform: rotateY(0deg);   }
+        33%  { transform: rotateY(120deg); }
+        66%  { transform: rotateY(240deg); }
+        100% { transform: rotateY(360deg); }
+      }
+      @keyframes diceShake {
+        0%,100% { transform: rotate(0deg); }
+        20%  { transform: rotate(-12deg) scale(1.1); }
+        40%  { transform: rotate(10deg)  scale(0.95); }
+        60%  { transform: rotate(-7deg)  scale(1.05); }
+        80%  { transform: rotate(5deg)   scale(1); }
+      }
+      @keyframes glowPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(232,67,147,0); }
+        50%      { box-shadow: 0 0 0 5px rgba(232,67,147,0.2); }
+      }
+      @keyframes jackpotPulse {
+        0%,100% { color: #f5a623; }
+        50%      { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+      }
+      @keyframes newEntry {
+        from { background: rgba(34,211,163,0.18); }
+        to   { background: transparent; }
+      }
+      @keyframes pulse {
+        0%,100% { opacity: 1; }
+        50%      { opacity: 0.55; }
+      }
+      @keyframes winnerShine {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-Dd3eMMaa.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

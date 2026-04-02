@@ -1,0 +1,21 @@
+import { GameState } from './types';
+export declare function createGame(): GameState;
+export declare function addPlayer(state: GameState, playerId: string, playerName: string): GameState;
+export declare function startGame(state: GameState): GameState;
+export declare function handleRollDice(state: GameState, playerId: string): GameState;
+export declare function handleBuyProperty(state: GameState, playerId: string): GameState;
+export declare function handleDeclineProperty(state: GameState, playerId: string): GameState;
+export declare function handleAuctionBid(state: GameState, playerId: string, amount: number): GameState;
+export declare function handleAuctionPass(state: GameState, playerId: string): GameState;
+export declare function handleConfirmAction(state: GameState, playerId: string): GameState;
+export declare function handlePayJailFee(state: GameState, playerId: string): GameState;
+export declare function handleBuildHouse(state: GameState, playerId: string, tilePosition: number): GameState;
+export declare function handleDeclineBuild(state: GameState, playerId: string): GameState;
+export declare function handleMortgageProperty(state: GameState, playerId: string, tilePosition: number): GameState;
+export declare function handleUnmortgageProperty(state: GameState, playerId: string, tilePosition: number): GameState;
+export declare function handleSellHouse(state: GameState, playerId: string, tilePosition: number): GameState;
+export declare function handleProposeTrade(state: GameState, fromPlayerId: string, toPlayerId: string, offerMoney: number, offerProperties: number[], requestMoney: number, requestProperties: number[]): GameState;
+export declare function handleAcceptTrade(state: GameState, playerId: string, tradeId: string): GameState;
+export declare function handleRejectTrade(state: GameState, playerId: string, tradeId: string): GameState;
+export declare function handleEndTurn(state: GameState, playerId: string): GameState;
+//# sourceMappingURL=gameEngine.d.ts.map

@@ -1,0 +1,13 @@
+{
+  "name": "Wiesbaden Monopoly",
+  "short_name": "WI Monopoly",
+  "description": "Lokales Multiplayer-Brettspiel im Wiesbaden-Stil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#e84393",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
