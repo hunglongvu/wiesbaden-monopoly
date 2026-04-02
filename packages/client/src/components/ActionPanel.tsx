@@ -162,12 +162,10 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
       </div>
 
       {/* Side actions */}
-      {!gameState.auction && (
-        <div style={{ display: 'flex', gap: 6 }}>
-          <SideBtn onClick={onOpenMortgage}>🏦 Hypotheken</SideBtn>
-          <SideBtn onClick={onOpenTrade}>🤝 Handel</SideBtn>
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <SideBtn onClick={onOpenMortgage}>🏦 Hypotheken</SideBtn>
+        <SideBtn onClick={onOpenTrade}>🤝 Handel</SideBtn>
+      </div>
 
       {/* Jackpot */}
       <div style={{
@@ -301,14 +299,14 @@ function BuySection({ tilePos, tiles, money, socket }: {
       <Row label="Preis" value={`${tile.price}€`} />
       <Row label="Dein Geld" value={`${money}€`} valueColor={canAfford ? '#22d3a3' : '#ef4444'} />
       {!canAfford && (
-        <div style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>Nicht genug → Auktion</div>
+        <div style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>Nicht genug Geld</div>
       )}
       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
         <BigBtn onClick={() => socket.emit('game:buy_property')} color="#22d3a3" dark disabled={!canAfford}>
           Kaufen
         </BigBtn>
         <SmallBtn onClick={() => socket.emit('game:decline_property')} outline>
-          Auktion
+          Überspringen
         </SmallBtn>
       </div>
     </InfoBox>

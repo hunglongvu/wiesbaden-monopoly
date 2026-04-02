@@ -443,26 +443,19 @@ export function handleDeclineProperty(state: GameState, playerId: string): GameS
   const pending = state.currentTurn.pendingAction;
   if (!pending || pending.type !== 'buy_property') throw new Error('No buy pending');
 
-  const activePlayers = state.players.filter((p) => !p.isBankrupt);
-  const auction = startAuction(
-    pending.tilePosition,
-    activePlayers,
-    playerId, // current player starts bidding
-    state.config.auctionStartBid
-  );
-
-  let newState = {
+  const tile = state.tiles[pending.tilePosition];
+  const newState = {
     ...state,
-    auction,
     currentTurn: {
       ...state.currentTurn,
-      phase: 'auction_in_progress' as const,
-      pendingAction: { type: 'auction', tilePosition: pending.tilePosition } as PendingAction,
+      pendingAction: undefined,
     },
   };
 
-  const tile = state.tiles[pending.tilePosition];
-  return addLog(newState, `Auktion für ${tile.name} beginnt`);
+  return checkAndEndTurn(
+    addLog(newState, `${state.players.find(p => p.id === playerId)?.name} überspringt ${tile.name}`),
+    playerId
+  );
 }
 
 export function handleAuctionBid(state: GameState, playerId: string, amount: number): GameState {

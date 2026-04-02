@@ -4,7 +4,6 @@ import { GameState, PropertyTile } from '../types';
 import Board from './Board';
 import PlayerPanel from './PlayerPanel';
 import ActionPanel from './ActionPanel';
-import AuctionModal from './modals/AuctionModal';
 import TradeModal from './modals/TradeModal';
 import MortgageModal from './modals/MortgageModal';
 import BuyModal from './modals/BuyModal';
@@ -98,9 +97,8 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
   // Show tax/repair as modal too
   const showTaxModal    = isMyTurn && animDone && pending?.type === 'pay_tax';
   const showRepairModal = isMyTurn && animDone && pending?.type === 'repair_costs';
-  const showBuyModal    = isMyTurn && animDone && pending?.type === 'buy_property' && !gameState.auction;
+  const showBuyModal    = isMyTurn && animDone && pending?.type === 'buy_property';
   const showBuildModal  = isMyTurn && animDone && pending?.type === 'build_house';
-  const showAuction     = !!(gameState.auction?.active);
 
   const incomingTrades = gameState.pendingTrades.filter(
     (t) => t.toPlayerId === myPlayerId && t.status === 'pending'
@@ -119,9 +117,6 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
       )}
       {showBuildModal && me && pending?.type === 'build_house' && (
         <BuildModal tile={tiles[pending.tilePosition] as PropertyTile} player={me} socket={socket} />
-      )}
-      {showAuction && (
-        <AuctionModal gameState={gameState} myPlayerId={myPlayerId} socket={socket} />
       )}
       {showTrade && (
         <TradeModal gameState={gameState} myPlayerId={myPlayerId} socket={socket} onClose={() => setShowTrade(false)} />

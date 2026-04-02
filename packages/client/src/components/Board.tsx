@@ -114,7 +114,11 @@ const TILE_SHORT: Record<number, string> = {
   39: 'Schloss',
 };
 
-const PLAYER_ICONS = ['▲', '■', '●', '◆'];
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
 
 function gridPos(pos: number): { gridColumn: string; gridRow: string } {
   if (pos === 0)  return { gridColumn: '11', gridRow: '11' };
@@ -514,14 +518,15 @@ function TileCell({
             const isMe = p.id === myPlayerId;
             return (
               <div key={p.id} title={p.name} style={{
-                width: 15, height: 15, borderRadius: '50%', background: p.color,
-                border: isMe ? '2px solid #fff' : '1.5px solid rgba(255,255,255,0.25)',
+                width: 22, height: 22, borderRadius: '50%', background: p.color,
+                border: isMe ? '2px solid #fff' : '1.5px solid rgba(255,255,255,0.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 7, fontWeight: 800, color: '#fff', flexShrink: 0,
+                fontSize: 8, fontWeight: 900, color: '#fff', flexShrink: 0,
+                letterSpacing: '-0.5px',
                 animation: isLanding ? 'tokenLand 0.6s cubic-bezier(0.36,0.07,0.19,0.97) both' : 'none',
-                boxShadow: isMe ? `0 0 6px ${p.color}` : 'none',
+                boxShadow: isMe ? `0 0 8px ${p.color}` : `0 1px 4px rgba(0,0,0,0.5)`,
               }}>
-                {PLAYER_ICONS[idx % 4]}
+                {getInitials(p.name)}
               </div>
             );
           })}
