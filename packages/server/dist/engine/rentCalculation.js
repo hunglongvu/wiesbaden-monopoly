@@ -52,7 +52,8 @@ function calculateRailroadRent(tile, landingPlayer, allTiles) {
         const rr = allTiles[pos];
         return rr && rr.type === 'railroad' && rr.ownerId === tile.ownerId && !rr.mortgaged;
     }).length;
-    const rentTable = { 1: 25, 2: 50, 3: 75, 4: 100 };
+    // 2 railroads on this board → 50€ / 100€ (matches standard Monopoly's 2nd and 4th tier)
+    const rentTable = { 1: 50, 2: 100 };
     const rentAmount = rentTable[ownedCount] ?? 25;
     return { ownerId: tile.ownerId, rentAmount };
 }

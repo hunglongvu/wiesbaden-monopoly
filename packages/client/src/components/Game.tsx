@@ -149,95 +149,52 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
       <div style={{
         display: 'flex', flexDirection: 'column',
         height: '100dvh', background: '#e8e0d0', overflow: 'hidden',
-        paddingTop: 'var(--safe-top)',
+        paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)',
       }}>
         {/* Header bar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '8px 14px', background: '#fff',
+          padding: '6px 12px', background: '#fff',
           borderBottom: '1px solid #d0c4aa', flexShrink: 0, gap: 8,
           boxShadow: '0 1px 4px rgba(26,20,12,0.08)',
         }}>
           <div style={{
             fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: 13, color: '#e8357a', letterSpacing: '0.08em',
+            fontSize: 13, color: '#e8357a', letterSpacing: '0.08em', flexShrink: 0,
           }}>
             WIESBADEN
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {players.filter(p => !p.isBankrupt).map(p => (
-              <div key={p.id} style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '3px 8px', borderRadius: 12,
-                background: p.id === currentTurn.playerId ? p.color + '20' : 'transparent',
-                border: `1px solid ${p.id === currentTurn.playerId ? p.color + '55' : 'transparent'}`,
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: p.id === currentTurn.playerId ? p.color : '#9e8e78' }}>
-                  {p.money}€
-                </span>
-              </div>
-            ))}
-          </div>
-          {gameState.jackpot.amount > 0 && (
-            <div style={{ fontSize: 11, color: '#c47d0a', fontWeight: 700, flexShrink: 0 }}>
-              🅿 {gameState.jackpot.amount}€
-            </div>
+          {incomingTrades.length > 0 && (
+            <button onClick={() => setShowTrade(true)} style={{
+              background: '#e8357a', border: 'none', borderRadius: 8,
+              padding: '4px 10px', color: '#fff', cursor: 'pointer',
+              fontWeight: 700, fontSize: 11, fontFamily: 'inherit', flexShrink: 0,
+              animation: 'pulse 1.5s ease-in-out infinite',
+            }}>
+              🤝 {incomingTrades.length} Handel
+            </button>
           )}
           <button onClick={toggleFullscreen} title={isFullscreen ? 'Vollbild beenden' : 'Vollbild'} style={{
             background: 'transparent', border: '1px solid #d0c4aa', borderRadius: 7,
-            width: 32, height: 32, cursor: 'pointer', fontSize: 14,
+            width: 30, height: 30, cursor: 'pointer', fontSize: 13, marginLeft: 'auto',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
             {isFullscreen ? '⊠' : '⊞'}
           </button>
         </div>
 
-        {/* Board */}
-        <div style={{ flexShrink: 0, width: '100%', display: 'flex', justifyContent: 'center', padding: '6px 4px 0', overflow: 'hidden' }}>
+        {/* Board fills remaining space, centered */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
           <div style={{ width: BOARD_SIZE * boardScale, height: BOARD_SIZE * boardScale, position: 'relative', flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, transformOrigin: 'top left', transform: `scale(${boardScale})` }}>
-              <Board gameState={gameState} myPlayerId={myPlayerId} />
+              <Board
+                gameState={gameState} myPlayerId={myPlayerId}
+                socket={socket}
+                onOpenTrade={() => setShowTrade(true)}
+                onOpenMortgage={() => setShowMortgage(true)}
+              />
             </div>
           </div>
-        </div>
-
-        {/* Tab content */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' } as React.CSSProperties}>
-            {activeTab === 'action' ? (
-              <ActionPanel gameState={gameState} myPlayerId={myPlayerId} socket={socket} onOpenTrade={() => setShowTrade(true)} onOpenMortgage={() => setShowMortgage(true)} />
-            ) : (
-              <PlayerPanel players={players} tiles={tiles} currentPlayerId={currentTurn.playerId} myPlayerId={myPlayerId} winCondition={config.winConditionNetWorth} />
-            )}
-          </div>
-        </div>
-
-        {/* Tab bar */}
-        <div style={{
-          display: 'flex', background: '#fff', borderTop: '1px solid #d0c4aa',
-          flexShrink: 0, paddingBottom: 'var(--safe-bottom)',
-        }}>
-          {([
-            { id: 'action' as const,  label: '🎲 Aktion',  badge: isMyTurn },
-            { id: 'players' as const, label: '👥 Spieler',  badge: incomingTrades.length > 0 },
-          ]).map(({ id, label, badge }) => (
-            <button key={id} onClick={() => setActiveTab(id)} style={{
-              flex: 1, padding: '13px 8px', border: 'none', cursor: 'pointer',
-              background: 'transparent',
-              color: activeTab === id ? '#e8357a' : '#9e8e78',
-              borderTop: `2px solid ${activeTab === id ? '#e8357a' : 'transparent'}`,
-              fontSize: 12, fontWeight: 600, fontFamily: 'inherit', position: 'relative' as const,
-            }}>
-              {label}
-              {badge && (
-                <span style={{
-                  position: 'absolute', top: 8, right: 'calc(50% - 22px)',
-                  width: 7, height: 7, borderRadius: '50%', background: '#e8357a',
-                }} />
-              )}
-            </button>
-          ))}
         </div>
 
         {modals}
