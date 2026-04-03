@@ -3,9 +3,15 @@ import { Socket } from 'socket.io-client';
 import { Tile, PropertyTile, RailroadTile, UtilityTile, Player } from '../../types';
 
 const COLOR_HEX: Record<string, string> = {
-  brown:'#7c4a1e', lightblue:'#38bdf8', pink:'#ec4899', orange:'#f97316',
-  red:'#ef4444', yellow:'#eab308', green:'#22c55e', darkblue:'#3b82f6',
+  brown:'#8b5e2a', lightblue:'#29b6e8', pink:'#e84393', orange:'#f47316',
+  red:'#e03030', yellow:'#d4a012', green:'#1fa854', darkblue:'#2255d4',
 };
+const COLOR_LABEL: Record<string, string> = {
+  brown:'Braun', lightblue:'Hellblau', pink:'Pink', orange:'Orange',
+  red:'Rot', yellow:'Gelb', green:'Grün', darkblue:'Dunkelblau',
+};
+
+const T = '#1a1510', T2 = '#6b5a42', T3 = '#9e8e78', B = '#d0c4aa';
 
 export default function BuyModal({ tile, player, socket }: { tile: Tile; player: Player; socket: Socket }) {
   const p = tile as PropertyTile | RailroadTile | UtilityTile;
@@ -13,114 +19,145 @@ export default function BuyModal({ tile, player, socket }: { tile: Tile; player:
   const propColor = tile.type === 'property' ? COLOR_HEX[(tile as PropertyTile).color] : undefined;
 
   return (
-    <Overlay>
-      <Modal>
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(26,20,12,0.55)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, backdropFilter: 'blur(8px)',
+    }}>
+      <div style={{
+        background: '#faf6ed', borderRadius: 20, overflow: 'hidden',
+        maxWidth: 'min(350px, calc(100vw - 24px))', width: '100%', margin: '0 12px',
+        border: `1px solid ${B}`,
+        animation: 'popIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+        boxShadow: '0 32px 80px rgba(26,20,12,0.3)',
+      }}>
+        {/* Color bar */}
         {propColor && (
-          <div style={{ height: 6, background: propColor, margin: '-20px -20px 16px', borderRadius: '12px 12px 0 0' }} />
-        )}
-        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>{tile.name}</h2>
-
-        {tile.type === 'property' && (
-          <RentTable tile={tile as PropertyTile} />
-        )}
-        {tile.type === 'railroad' && (
-          <InfoText>Bahnhof — Miete steigt mit Anzahl eigener Bahnhöfe (25/50/75/100€)</InfoText>
-        )}
-        {tile.type === 'utility' && (
-          <InfoText>Versorgungsbetrieb — Miete = 4× (1 Betrieb) oder 10× (beide) des Würfelwurfs</InfoText>
+          <div style={{ height: 10, background: propColor }} />
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '12px 0' }}>
-          <Row label="Kaufpreis" value={`${p.price}€`} />
-          <Row label="Dein Geld" value={`${player.money}€`} color={canAfford ? '#22d3a3' : '#ef4444'} />
+        <div style={{ padding: 22 }}>
+          {/* Header */}
+          <div style={{ marginBottom: 18 }}>
+            {propColor && (
+              <div style={{
+                display: 'inline-block', padding: '3px 12px', borderRadius: 20,
+                background: propColor, color: '#fff',
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', marginBottom: 8,
+              }}>
+                {COLOR_LABEL[(tile as PropertyTile).color]?.toUpperCase()}
+              </div>
+            )}
+            <h2 style={{ fontSize: 19, fontWeight: 800, color: T, lineHeight: 1.2 }}>{tile.name}</h2>
+          </div>
+
+          {/* Rent table for property */}
+          {tile.type === 'property' && <RentTable tile={tile as PropertyTile} />}
+          {tile.type === 'railroad' && (
+            <InfoCard>
+              <div style={{ fontSize: 12, color: T2, lineHeight: 1.6 }}>
+                🚂 Miete steigt mit der Anzahl eigener Bahnhöfe<br />
+                <strong>25 · 50 · 75 · 100€</strong>
+              </div>
+            </InfoCard>
+          )}
+          {tile.type === 'utility' && (
+            <InfoCard>
+              <div style={{ fontSize: 12, color: T2, lineHeight: 1.6 }}>
+                ⚡ Miete = Würfelwurf × <strong>4</strong> (1 Werk) oder × <strong>10</strong> (beide Werke)
+              </div>
+            </InfoCard>
+          )}
+
+          {/* Price row */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '12px 0', borderTop: `1px solid ${B}`, borderBottom: `1px solid ${B}`,
+            margin: '14px 0',
+          }}>
+            <div>
+              <div style={{ fontSize: 10, color: T3, fontWeight: 600, marginBottom: 2 }}>KAUFPREIS</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: T }}>{p.price}€</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 10, color: T3, fontWeight: 600, marginBottom: 2 }}>DEIN GELD</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: canAfford ? '#16884a' : '#c42828' }}>
+                {player.money}€
+              </div>
+            </div>
+          </div>
+
           {!canAfford && (
-            <div style={{ color: '#ef4444', fontSize: 11, textAlign: 'center', padding: '4px 0' }}>
-              Nicht genug Geld → Auktion wird gestartet
+            <div style={{ color: '#c42828', fontSize: 12, marginBottom: 12, textAlign: 'center', fontWeight: 600 }}>
+              Nicht genug Geld für diesen Kauf
             </div>
           )}
-        </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Btn onClick={() => socket.emit('game:buy_property')} disabled={!canAfford} primary>
-            💰 Kaufen ({p.price}€)
-          </Btn>
-          <Btn onClick={() => socket.emit('game:decline_property')}>🏛 Auktion</Btn>
+          {/* Buttons */}
+          <div style={{ display: 'flex', gap: 9 }}>
+            <button onClick={() => socket.emit('game:buy_property')} disabled={!canAfford} style={{
+              flex: 2, padding: '14px', border: 'none', borderRadius: 12, minHeight: 50,
+              cursor: canAfford ? 'pointer' : 'not-allowed', fontWeight: 800, fontSize: 15, fontFamily: 'inherit',
+              background: canAfford ? '#16884a' : '#f5f0e6',
+              color: canAfford ? '#fff' : T3,
+              boxShadow: canAfford ? '0 3px 12px rgba(22,136,74,0.4)' : 'none',
+              transition: 'transform 0.1s',
+            }}
+            onMouseDown={(e) => { if (canAfford) e.currentTarget.style.transform = 'scale(0.97)'; }}
+            onMouseUp={(e)   => { e.currentTarget.style.transform = 'scale(1)'; }}>
+              💰 Kaufen
+            </button>
+            <button onClick={() => socket.emit('game:decline_property')} style={{
+              flex: 1, padding: '14px', borderRadius: 12, minHeight: 50,
+              border: `1px solid ${B}`, background: 'transparent', color: T2,
+              cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+            }}>
+              Überspringen
+            </button>
+          </div>
         </div>
-      </Modal>
-    </Overlay>
-  );
-}
-
-function RentTable({ tile }: { tile: PropertyTile }) {
-  const labels = ['Basis', '1 Haus', '2 Häuser', '3 Häuser', '4 Häuser', 'Hotel'];
-  return (
-    <div style={{
-      background: '#0d1830', borderRadius: 8, padding: '8px 10px',
-      margin: '8px 0', border: '1px solid #1e3a5f',
-    }}>
-      {tile.rent.map((r, i) => (
-        <div key={i} style={{
-          display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '2px 0',
-          borderBottom: i < tile.rent.length - 1 ? '1px solid #1e3a5f22' : 'none',
-        }}>
-          <span style={{ color: '#8899b4' }}>{labels[i]}</span>
-          <span style={{ color: i === 0 ? '#8899b4' : '#e8edf5', fontWeight: i > 0 ? 600 : 400 }}>{r}€</span>
-        </div>
-      ))}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0 0', borderTop: '1px solid #1e3a5f44', marginTop: 2 }}>
-        <span style={{ color: '#22d3a3' }}>Hauskosten</span>
-        <span style={{ color: '#22d3a3', fontWeight: 600 }}>{tile.housePrice}€</span>
       </div>
     </div>
   );
 }
 
-function InfoText({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 12, color: '#8899b4', margin: '6px 0', lineHeight: 1.5 }}>{children}</p>;
-}
-function Row({ label, value, color }: { label: string; value: string; color?: string }) {
+function RentTable({ tile }: { tile: PropertyTile }) {
+  const rows = [
+    { label: 'Basis',    v: tile.rent[0] },
+    { label: '1 Haus',   v: tile.rent[1] },
+    { label: '2 Häuser', v: tile.rent[2] },
+    { label: '3 Häuser', v: tile.rent[3] },
+    { label: '4 Häuser', v: tile.rent[4] },
+    { label: 'Hotel 🏨', v: tile.rent[5] },
+  ];
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-      <span style={{ color: '#8899b4' }}>{label}</span>
-      <span style={{ fontWeight: 700, color: color ?? '#e8edf5' }}>{value}</span>
+    <div style={{ border: `1px solid ${B}`, borderRadius: 12, overflow: 'hidden', marginBottom: 14 }}>
+      {rows.map(({ label, v }, i) => (
+        <div key={i} style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '7px 14px',
+          background: i % 2 === 0 ? '#fff' : '#f8f4ec',
+          borderBottom: i < rows.length - 1 ? `1px solid ${B}44` : 'none',
+        }}>
+          <span style={{ fontSize: 12, color: T2 }}>{label}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? T2 : T }}>{v}€</span>
+        </div>
+      ))}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '8px 14px', background: '#f0f8f4', borderTop: `1px solid ${B}44`,
+      }}>
+        <span style={{ fontSize: 11, color: '#16884a', fontWeight: 600 }}>Hauskosten</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: '#16884a' }}>{tile.housePrice}€</span>
+      </div>
     </div>
   );
 }
-function Btn({ onClick, children, disabled, primary }: {
-  onClick: () => void; children: React.ReactNode; disabled?: boolean; primary?: boolean;
-}) {
+
+function InfoCard({ children }: { children: React.ReactNode }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-      flex: 1, padding: '13px 12px', border: 'none', borderRadius: 8, minHeight: 44,
-      cursor: disabled ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'inherit',
-      background: disabled ? '#1a2540' : primary ? '#22d3a3' : 'transparent',
-      color: disabled ? '#546a8a' : primary ? '#000' : '#8899b4',
-      border2: primary ? 'none' : '1px solid #1e3a5f',
-    } as any}>
-      {children}
-    </button>
-  );
-}
-function Overlay({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      backdropFilter: 'blur(3px)',
-    }}>
-      {children}
-    </div>
-  );
-}
-function Modal({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      background: '#111827', borderRadius: 14, padding: 20,
-      maxWidth: 'min(340px, calc(100vw - 24px))', width: '100%', margin: '0 12px',
-      border: '1px solid #1e3a5f',
-      animation: 'fadeIn 0.2s ease both',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-    }}>
+    <div style={{ background: '#f5f0e6', borderRadius: 10, padding: '10px 14px', marginBottom: 14, border: `1px solid ${B}` }}>
       {children}
     </div>
   );

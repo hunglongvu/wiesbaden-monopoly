@@ -3,19 +3,26 @@ import { Socket } from 'socket.io-client';
 import { PropertyTile, Player } from '../../types';
 
 const COLOR_HEX: Record<string, string> = {
-  brown:'#7c4a1e', lightblue:'#38bdf8', pink:'#ec4899', orange:'#f97316',
-  red:'#ef4444', yellow:'#eab308', green:'#22c55e', darkblue:'#3b82f6',
+  brown:'#8b5e2a', lightblue:'#29b6e8', pink:'#e84393', orange:'#f47316',
+  red:'#e03030', yellow:'#d4a012', green:'#1fa854', darkblue:'#2255d4',
 };
+const T = '#1a1510', T2 = '#6b5a42', T3 = '#9e8e78', B = '#d0c4aa';
 
-function HouseIcons({ count }: { count: number }) {
-  if (count === 5) return <span style={{ color: '#ef4444', fontWeight: 800, fontSize: 13 }}>🏨 Hotel</span>;
+function HouseBar({ count }: { count: number }) {
+  if (count === 5) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ background: '#e03030', color: '#fff', fontSize: 12, fontWeight: 800, padding: '3px 12px', borderRadius: 8 }}>🏨 Hotel</div>
+    </div>
+  );
   return (
-    <span>
-      {Array.from({ length: count }, (_, i) => (
-        <span key={i} style={{ color: '#22c55e', fontSize: 13 }}>🏠</span>
-      ))}
-      {count === 0 && <span style={{ color: '#546a8a', fontSize: 12 }}>—</span>}
-    </span>
+    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+      {count === 0
+        ? <span style={{ color: T3, fontSize: 12 }}>Leer</span>
+        : Array.from({ length: count }, (_, i) => (
+            <div key={i} style={{ width: 22, height: 22, background: '#1fa854', borderRadius: 4, border: '1px solid rgba(26,20,12,0.1)' }} />
+          ))
+      }
+    </div>
   );
 }
 
@@ -23,84 +30,90 @@ export default function BuildModal({ tile, player, socket }: { tile: PropertyTil
   const canAfford = player.money >= tile.housePrice;
   const nextLevel = tile.houses === 4 ? 5 : tile.houses + 1;
   const newRent   = tile.rent[nextLevel] ?? tile.rent[5];
-  const propColor = COLOR_HEX[tile.color] ?? '#555';
+  const propColor = COLOR_HEX[tile.color] ?? '#888';
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-      backdropFilter: 'blur(3px)',
+      position: 'fixed', inset: 0,
+      background: 'rgba(26,20,12,0.55)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000, backdropFilter: 'blur(8px)',
     }}>
       <div style={{
-        background: '#111827', borderRadius: 14, padding: 20,
-        maxWidth: 'min(320px, calc(100vw - 24px))', width: '100%', margin: '0 12px',
-        border: '1px solid #1e3a5f',
-        animation: 'fadeIn 0.2s ease both', boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-        overflow: 'hidden',
+        background: '#faf6ed', borderRadius: 20, overflow: 'hidden',
+        maxWidth: 'min(340px, calc(100vw - 24px))', width: '100%', margin: '0 12px',
+        border: `1px solid ${B}`,
+        animation: 'popIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+        boxShadow: '0 32px 80px rgba(26,20,12,0.3)',
       }}>
-        <div style={{ height: 5, background: propColor, margin: '-20px -20px 16px', borderRadius: '12px 12px 0 0' }} />
-        <div style={{ fontSize: 11, color: '#546a8a', marginBottom: 4 }}>🏗 Gebäude bauen</div>
-        <h2 style={{ fontSize: 17, fontWeight: 800, marginBottom: 14 }}>{tile.name}</h2>
+        {/* Color bar */}
+        <div style={{ height: 8, background: propColor }} />
 
-        {/* Level indicator */}
-        <div style={{
-          background: '#0d1830', borderRadius: 8, padding: '10px 12px',
-          border: '1px solid #1e3a5f', marginBottom: 12,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, color: '#8899b4' }}>Aktuell</span>
-            <HouseIcons count={tile.houses} />
-          </div>
-          <div style={{ height: 1, background: '#1e3a5f', marginBottom: 8 }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, color: '#22d3a3' }}>Nach Upgrade</span>
-            <HouseIcons count={nextLevel} />
-          </div>
-        </div>
+        <div style={{ padding: 22 }}>
+          <div style={{ fontSize: 11, color: T3, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>GEBÄUDE BAUEN</div>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: T, marginBottom: 18 }}>{tile.name}</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
-          {[
-            { label: 'Neue Miete', value: `${newRent}€`, color: '#f5a623' },
-            { label: 'Baukosten',  value: `${tile.housePrice}€`, color: canAfford ? '#22d3a3' : '#ef4444' },
-            { label: 'Dein Geld',  value: `${player.money}€ → ${player.money - tile.housePrice}€`,
-              color: canAfford ? '#22d3a3' : '#ef4444' },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: '#8899b4' }}>{label}</span>
-              <span style={{ fontWeight: 600, color }}>{value}</span>
+          {/* Level comparison */}
+          <div style={{ border: `1px solid ${B}`, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 14px', background: '#fff', borderBottom: `1px solid ${B}`,
+            }}>
+              <span style={{ fontSize: 11, color: T3, fontWeight: 600 }}>AKTUELL</span>
+              <HouseBar count={tile.houses} />
             </div>
-          ))}
-        </div>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 14px', background: '#f0fff6',
+            }}>
+              <span style={{ fontSize: 11, color: '#16884a', fontWeight: 700 }}>NACH UPGRADE</span>
+              <HouseBar count={nextLevel} />
+            </div>
+          </div>
 
-        <div style={{
-          fontSize: 10, color: '#f5a623', padding: '6px 8px', marginBottom: 12,
-          background: 'rgba(245,166,35,0.07)', borderRadius: 6, border: '1px solid rgba(245,166,35,0.2)',
-          lineHeight: 1.5,
-        }}>
-          ⚡ Sonderregel: Bauen nur beim Landen auf eigenem Feld möglich
-        </div>
+          {/* Stats */}
+          <div style={{ border: `1px solid ${B}`, borderRadius: 12, overflow: 'hidden', marginBottom: 14 }}>
+            {[
+              { label: 'Neue Miete', value: `${newRent}€`, color: '#c47d0a' },
+              { label: 'Baukosten',  value: `${tile.housePrice}€`, color: canAfford ? '#16884a' : '#c42828' },
+              { label: 'Geld nach Bau', value: `${player.money - tile.housePrice}€`, color: canAfford ? T : '#c42828' },
+            ].map(({ label, value, color }, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '9px 14px',
+                background: i % 2 === 0 ? '#fff' : '#f8f4ec',
+                borderBottom: i < 2 ? `1px solid ${B}44` : 'none',
+              }}>
+                <span style={{ fontSize: 12, color: T2 }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color }}>{value}</span>
+              </div>
+            ))}
+          </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => socket.emit('game:build_house', { tilePosition: tile.position })}
-            disabled={!canAfford}
-            style={{
-              flex: 1, padding: '13px', border: 'none', borderRadius: 8, minHeight: 44,
-              background: canAfford ? '#22d3a3' : '#1a2540', color: canAfford ? '#000' : '#546a8a',
-              cursor: canAfford ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: 13, fontFamily: 'inherit',
-            }}
-          >
-            Bauen ({tile.housePrice}€)
-          </button>
-          <button
-            onClick={() => socket.emit('game:decline_build')}
-            style={{
-              flex: 1, padding: '13px', borderRadius: 8, border: '1px solid #1e3a5f', minHeight: 44,
-              background: 'transparent', color: '#8899b4', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
-            }}
-          >
-            Überspringen
-          </button>
+          <div style={{
+            fontSize: 11, color: '#c47d0a', padding: '8px 12px', marginBottom: 16,
+            background: '#c47d0a0e', borderRadius: 8, border: '1px solid #c47d0a22',
+          }}>
+            ⚡ Sonderregel: Bauen nur beim Landen auf eigenem Feld möglich
+          </div>
+
+          <div style={{ display: 'flex', gap: 9 }}>
+            <button onClick={() => socket.emit('game:build_house', { tilePosition: tile.position })} disabled={!canAfford} style={{
+              flex: 2, padding: '14px', border: 'none', borderRadius: 12, minHeight: 50,
+              background: canAfford ? '#16884a' : '#f5f0e6',
+              color: canAfford ? '#fff' : T3,
+              cursor: canAfford ? 'pointer' : 'not-allowed', fontWeight: 800, fontSize: 15, fontFamily: 'inherit',
+              boxShadow: canAfford ? '0 3px 12px rgba(22,136,74,0.4)' : 'none',
+            }}>
+              Bauen ({tile.housePrice}€)
+            </button>
+            <button onClick={() => socket.emit('game:decline_build')} style={{
+              flex: 1, padding: '14px', borderRadius: 12, border: `1px solid ${B}`,
+              background: 'transparent', color: T2, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
+            }}>
+              Überspringen
+            </button>
+          </div>
         </div>
       </div>
     </div>

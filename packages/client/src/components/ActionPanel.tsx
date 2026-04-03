@@ -3,7 +3,13 @@ import { Socket } from 'socket.io-client';
 import { GameState, Player, Tile, PropertyTile, RailroadTile, UtilityTile } from '../types';
 import { playCoinBuy, playRentPay, playDiceRoll } from '../sounds';
 
-// ── Dice face component ───────────────────────────────────────────────────────
+const S = '#ffffff';          // surface
+const B = '#d0c4aa';          // border
+const T = '#1a1510';          // text
+const T2 = '#6b5a42';         // text2
+const T3 = '#9e8e78';         // text3
+const ACCENT = '#e8357a';
+const GREEN = '#16884a';
 
 const DOT_GRID: Record<number, [number, number][]> = {
   1: [[50, 50]],
@@ -18,32 +24,28 @@ function DieFace({ value, rolling }: { value: number; rolling: boolean }) {
   const dots = DOT_GRID[value] ?? DOT_GRID[1];
   return (
     <div style={{
-      width: 44, height: 44, background: '#f1f5f9', borderRadius: 10,
-      position: 'relative', flexShrink: 0,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.8)',
+      width: 48, height: 48, background: '#fff',
+      borderRadius: 12, position: 'relative', flexShrink: 0,
+      border: `1px solid ${B}`,
+      boxShadow: rolling
+        ? '0 0 0 3px rgba(232,53,122,0.3), 0 4px 12px rgba(26,20,12,0.15)'
+        : '0 3px 8px rgba(26,20,12,0.12)',
       animation: rolling ? 'diceShake 0.45s ease both' : 'none',
     }}>
       {dots.map(([top, left], i) => (
         <div key={i} style={{
           position: 'absolute', width: 8, height: 8, borderRadius: '50%',
-          background: '#1e293b',
-          top: `${top}%`, left: `${left}%`,
+          background: T, top: `${top}%`, left: `${left}%`,
           transform: 'translate(-50%, -50%)',
-          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
         }} />
       ))}
     </div>
   );
 }
 
-// ── Action Panel ──────────────────────────────────────────────────────────────
-
 interface Props {
-  gameState: GameState;
-  myPlayerId: string;
-  socket: Socket;
-  onOpenTrade: () => void;
-  onOpenMortgage: () => void;
+  gameState: GameState; myPlayerId: string; socket: Socket;
+  onOpenTrade: () => void; onOpenMortgage: () => void;
 }
 
 export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade, onOpenMortgage }: Props) {
@@ -51,7 +53,6 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
   const isMyTurn = currentTurn.playerId === myPlayerId;
   const me = players.find((p) => p.id === myPlayerId);
 
-  // Track dice roll animation
   const prevDice = useRef<[number, number] | undefined>(undefined);
   const [rollingAnim, setRollingAnim] = useState(false);
 
@@ -67,7 +68,7 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
   if (!me || me.isBankrupt) {
     return (
       <Panel>
-        <div style={{ textAlign: 'center', color: '#546a8a', padding: '1rem', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', color: T3, padding: '1.5rem', fontSize: 14 }}>
           {me?.isBankrupt ? '💸 Du bist bankrott' : 'Zuschauer-Modus'}
         </div>
       </Panel>
@@ -81,88 +82,75 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
     <Panel>
       {/* Turn indicator */}
       <div style={{
-        padding: '6px 10px', borderRadius: 8, textAlign: 'center', fontSize: 13, fontWeight: 600,
-        background: isMyTurn ? 'rgba(34,211,163,0.1)' : 'rgba(84,106,138,0.1)',
-        border: `1px solid ${isMyTurn ? 'rgba(34,211,163,0.25)' : 'rgba(84,106,138,0.2)'}`,
-        color: isMyTurn ? '#22d3a3' : '#546a8a',
+        padding: '10px 14px', borderRadius: 10, textAlign: 'center',
+        fontSize: 14, fontWeight: 700,
+        background: isMyTurn ? '#e8357a14' : 'rgba(26,20,12,0.04)',
+        border: `1px solid ${isMyTurn ? '#e8357a44' : B}`,
+        color: isMyTurn ? ACCENT : T3,
       }}>
         {isMyTurn
           ? '🎯 Du bist am Zug'
           : `⏳ ${players.find((p) => p.id === currentTurn.playerId)?.name ?? '...'} ist am Zug`}
       </div>
 
-      {/* Dice display */}
+      {/* Dice */}
       {currentTurn.diceRoll && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 10, padding: '10px 0',
-          animation: 'slideUp 0.25s ease both',
+          gap: 10, padding: '10px 0', animation: 'slideUp 0.25s ease both',
         }}>
           <DieFace value={currentTurn.diceRoll[0]} rolling={rollingAnim} />
-          <div style={{ color: '#546a8a', fontSize: 18, fontWeight: 300 }}>+</div>
+          <div style={{ color: T3, fontSize: 18, fontWeight: 300 }}>+</div>
           <DieFace value={currentTurn.diceRoll[1]} rolling={rollingAnim} />
-          <div style={{ color: '#546a8a', fontSize: 18, fontWeight: 300 }}>=</div>
+          <div style={{ color: T3, fontSize: 18, fontWeight: 300 }}>=</div>
           <div style={{
-            minWidth: 36, height: 36, borderRadius: 8,
-            background: currentTurn.isDoubles ? '#f5a623' : '#1a2540',
-            border: `1px solid ${currentTurn.isDoubles ? '#f5a623' : '#1e3a5f'}`,
+            minWidth: 42, height: 42, borderRadius: 10,
+            background: currentTurn.isDoubles ? '#c47d0a' : '#f5f0e6',
+            border: `1px solid ${currentTurn.isDoubles ? '#c47d0a' : B}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 800, fontSize: 18,
-            color: currentTurn.isDoubles ? '#000' : '#22d3a3',
+            fontWeight: 900, fontSize: 20,
+            color: currentTurn.isDoubles ? '#fff' : T,
           }}>
             {currentTurn.diceRoll[0] + currentTurn.diceRoll[1]}
           </div>
           {currentTurn.isDoubles && (
             <div style={{
-              background: '#f5a623', color: '#000', fontSize: 10, fontWeight: 800,
-              padding: '2px 6px', borderRadius: 4, letterSpacing: '0.05em',
+              background: '#c47d0a', color: '#fff', fontSize: 10, fontWeight: 800,
+              padding: '3px 7px', borderRadius: 6, letterSpacing: '0.05em',
               animation: 'bounceIn 0.4s cubic-bezier(0.36,0.07,0.19,0.97) both',
-            }}>
-              PASCH!
-            </div>
+            }}>PASCH!</div>
           )}
         </div>
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {/* Roll dice */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {isMyTurn && phase === 'waiting_for_roll' && !me.inJail && (
-          <BigBtn onClick={() => socket.emit('game:roll_dice')} color="#e84393">
+          <BigBtn onClick={() => { playDiceRoll(); socket.emit('game:roll_dice'); }} color={ACCENT} light>
             🎲 Würfeln
           </BigBtn>
         )}
-
-        {/* Jail options */}
         {isMyTurn && phase === 'waiting_for_roll' && me.inJail && (
           <JailSection me={me} config={config} socket={socket} />
         )}
-
-        {/* Buy option */}
         {isMyTurn && phase === 'buy_or_auction' && pending?.type === 'buy_property' && (
           <BuySection tilePos={pending.tilePosition} tiles={tiles} money={me.money} socket={socket} />
         )}
-
-        {/* Build option */}
         {isMyTurn && phase === 'build_option' && pending?.type === 'build_house' && (
           <BuildSection tilePos={pending.tilePosition} tiles={tiles} money={me.money} socket={socket} />
         )}
-
-        {/* Pay rent inline – tax/repair are EventCardModal */}
         {isMyTurn && phase === 'tile_action' && pending?.type === 'pay_rent' && (
           <PaySection pending={pending} players={players} socket={socket} />
         )}
-
-        {/* End turn */}
         {isMyTurn && phase === 'end_turn' && (
-          <BigBtn onClick={() => socket.emit('game:end_turn')} color="#22d3a3" dark>
+          <BigBtn onClick={() => socket.emit('game:end_turn')} color={GREEN} light>
             ✓ Zug beenden
           </BigBtn>
         )}
       </div>
 
       {/* Side actions */}
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 7 }}>
         <SideBtn onClick={onOpenMortgage}>🏦 Hypotheken</SideBtn>
         <SideBtn onClick={onOpenTrade}>🤝 Handel</SideBtn>
       </div>
@@ -170,12 +158,12 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
       {/* Jackpot */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '7px 10px', borderRadius: 8, background: '#120f00',
-        border: '1px solid #2a2000',
+        padding: '8px 12px', borderRadius: 10,
+        background: '#fff8e8', border: '1px solid #d4a01233',
       }}>
-        <span style={{ fontSize: 12, color: '#8a7a30' }}>🅿 Jackpot</span>
+        <span style={{ fontSize: 12, color: '#9a7820', fontWeight: 600 }}>🅿 Freiparken-Jackpot</span>
         <span style={{
-          fontSize: 16, fontWeight: 800, color: '#f5a623',
+          fontSize: 17, fontWeight: 900, color: '#c47d0a',
           animation: jackpot.amount > 0 ? 'jackpotPulse 2s ease-in-out infinite' : 'none',
         }}>
           {jackpot.amount.toLocaleString('de-DE')}€
@@ -190,42 +178,43 @@ export default function ActionPanel({ gameState, myPlayerId, socket, onOpenTrade
 function Panel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      background: '#111827', borderRadius: 12, padding: 12,
-      border: '1px solid #1e3a5f', display: 'flex', flexDirection: 'column', gap: 8,
+      background: S, borderRadius: 14, padding: 14,
+      border: `1px solid ${B}`,
+      display: 'flex', flexDirection: 'column', gap: 9,
+      boxShadow: '0 2px 12px rgba(26,20,12,0.1)',
     }}>
       {children}
     </div>
   );
 }
 
-function BigBtn({ onClick, color, dark, children, disabled }: {
-  onClick: () => void; color: string; dark?: boolean;
+function BigBtn({ onClick, color, light, children, disabled }: {
+  onClick: () => void; color: string; light?: boolean;
   children: React.ReactNode; disabled?: boolean;
 }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      padding: '13px 12px', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer', minHeight: 44,
-      background: disabled ? '#1a2540' : color, color: disabled ? '#546a8a' : (dark ? '#000' : '#fff'),
-      fontWeight: 700, fontSize: 14, transition: 'opacity 0.15s, transform 0.1s',
-      fontFamily: 'inherit',
+      padding: '14px 12px', border: 'none', borderRadius: 10, cursor: disabled ? 'not-allowed' : 'pointer',
+      minHeight: 48, fontWeight: 800, fontSize: 15, fontFamily: 'inherit',
+      background: disabled ? '#f5f0e6' : color,
+      color: disabled ? T3 : (light ? '#fff' : T),
+      boxShadow: disabled ? 'none' : `0 3px 10px ${color}44`,
+      transition: 'transform 0.1s, box-shadow 0.1s',
     }}
-    onMouseDown={(e) => { if (!disabled) (e.currentTarget.style.transform = 'scale(0.97)'); }}
-    onMouseUp={(e)   => { (e.currentTarget.style.transform = 'scale(1)'); }}>
+    onMouseDown={(e) => { if (!disabled) { e.currentTarget.style.transform = 'scale(0.97)'; e.currentTarget.style.boxShadow = 'none'; }}}
+    onMouseUp={(e)   => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = disabled ? 'none' : `0 3px 10px ${color}44`; }}>
       {children}
     </button>
   );
 }
 
-function SmallBtn({ onClick, children, outline }: {
-  onClick: () => void; children: React.ReactNode; outline?: boolean;
-}) {
+function SmallBtn({ onClick, children, outline }: { onClick: () => void; children: React.ReactNode; outline?: boolean }) {
   return (
     <button onClick={onClick} style={{
-      padding: '7px 10px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-      background: outline ? 'transparent' : '#1a2540',
-      border: `1px solid ${outline ? '#546a8a' : '#1e3a5f'}`,
-      color: outline ? '#8899b4' : '#c8d8f0',
-      transition: 'background 0.15s', fontFamily: 'inherit',
+      padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+      background: outline ? 'transparent' : '#f5f0e6',
+      border: `1px solid ${outline ? B : '#d0c4aa'}`,
+      color: T2, transition: 'background 0.15s', fontFamily: 'inherit',
     }}>
       {children}
     </button>
@@ -235,10 +224,12 @@ function SmallBtn({ onClick, children, outline }: {
 function SideBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick} style={{
-      flex: 1, padding: '7px 6px', border: '1px solid #1e3a5f', borderRadius: 7,
-      background: '#0d1830', color: '#8899b4', cursor: 'pointer', fontSize: 11,
-      fontWeight: 500, fontFamily: 'inherit', transition: 'background 0.15s',
-    }}>
+      flex: 1, padding: '9px 8px', border: `1px solid ${B}`, borderRadius: 9,
+      background: '#f5f0e6', color: T2, cursor: 'pointer', fontSize: 12,
+      fontWeight: 600, fontFamily: 'inherit', transition: 'background 0.15s',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.background = '#ede8dc')}
+    onMouseLeave={(e) => (e.currentTarget.style.background = '#f5f0e6')}>
       {children}
     </button>
   );
@@ -247,8 +238,8 @@ function SideBtn({ onClick, children }: { onClick: () => void; children: React.R
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      background: '#0d1830', borderRadius: 8, padding: '8px 10px',
-      border: '1px solid #1e3a5f', animation: 'slideUp 0.2s ease both',
+      background: '#f5f0e6', borderRadius: 10, padding: '10px 12px',
+      border: `1px solid ${B}`, animation: 'slideUp 0.2s ease both',
     }}>
       {children}
     </div>
@@ -258,8 +249,8 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 function Row({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, margin: '2px 0' }}>
-      <span style={{ color: '#8899b4' }}>{label}</span>
-      <span style={{ fontWeight: 600, color: valueColor ?? '#e8edf5' }}>{value}</span>
+      <span style={{ color: T2 }}>{label}</span>
+      <span style={{ fontWeight: 700, color: valueColor ?? T }}>{value}</span>
     </div>
   );
 }
@@ -267,18 +258,14 @@ function Row({ label, value, valueColor }: { label: string; value: string; value
 function JailSection({ me, config, socket }: { me: Player; config: any; socket: Socket }) {
   return (
     <InfoBox>
-      <div style={{ color: '#f5a623', fontSize: 12, fontWeight: 600, marginBottom: 6, textAlign: 'center' }}>
-        🔒 Gefängnis – Versuch {me.jailTurns + 1}/3
+      <div style={{ color: '#c47d0a', fontSize: 13, fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>
+        🔒 Gefängnis — Versuch {me.jailTurns + 1}/3
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <BigBtn
-          onClick={() => { playRentPay(); socket.emit('game:pay_jail_fee'); }}
-          color="#3b82f6"
-          disabled={me.money < config.jailBuyoutCost}
-        >
-          💰 {config.jailBuyoutCost}€ Kaution
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <BigBtn onClick={() => { playRentPay(); socket.emit('game:pay_jail_fee'); }} color="#2252c8" light disabled={me.money < config.jailBuyoutCost}>
+          💰 {config.jailBuyoutCost}€ Kaution zahlen
         </BigBtn>
-        <BigBtn onClick={() => socket.emit('game:roll_for_jail')} color="#e84393">
+        <BigBtn onClick={() => socket.emit('game:roll_for_jail')} color={ACCENT} light>
           🎲 Auf Pasch würfeln
         </BigBtn>
       </div>
@@ -286,24 +273,20 @@ function JailSection({ me, config, socket }: { me: Player; config: any; socket: 
   );
 }
 
-function BuySection({ tilePos, tiles, money, socket }: {
-  tilePos: number; tiles: Tile[]; money: number; socket: Socket;
-}) {
+function BuySection({ tilePos, tiles, money, socket }: { tilePos: number; tiles: Tile[]; money: number; socket: Socket }) {
   const tile = tiles[tilePos] as PropertyTile | RailroadTile | UtilityTile;
   const canAfford = money >= tile.price;
   return (
     <InfoBox>
-      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#e8edf5' }}>
-        {tile.name}
-      </div>
+      <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6, color: T }}>{tile.name}</div>
       <Row label="Preis" value={`${tile.price}€`} />
-      <Row label="Dein Geld" value={`${money}€`} valueColor={canAfford ? '#22d3a3' : '#ef4444'} />
+      <Row label="Dein Geld" value={`${money}€`} valueColor={canAfford ? GREEN : '#c42828'} />
       {!canAfford && (
-        <div style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>Nicht genug Geld</div>
+        <div style={{ color: '#c42828', fontSize: 11, marginTop: 4 }}>Nicht genug Geld</div>
       )}
-      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-        <BigBtn onClick={() => socket.emit('game:buy_property')} color="#22d3a3" dark disabled={!canAfford}>
-          Kaufen
+      <div style={{ display: 'flex', gap: 7, marginTop: 10 }}>
+        <BigBtn onClick={() => { playCoinBuy(); socket.emit('game:buy_property'); }} color={GREEN} light disabled={!canAfford}>
+          Kaufen ({tile.price}€)
         </BigBtn>
         <SmallBtn onClick={() => socket.emit('game:decline_property')} outline>
           Überspringen
@@ -313,67 +296,54 @@ function BuySection({ tilePos, tiles, money, socket }: {
   );
 }
 
-function BuildSection({ tilePos, tiles, money, socket }: {
-  tilePos: number; tiles: Tile[]; money: number; socket: Socket;
-}) {
+function BuildSection({ tilePos, tiles, money, socket }: { tilePos: number; tiles: Tile[]; money: number; socket: Socket }) {
   const tile = tiles[tilePos] as PropertyTile;
   const canAfford = money >= tile.housePrice;
   const next = tile.houses === 4 ? 'Hotel' : `${tile.houses + 1}. Haus`;
   const newRent = tile.houses < 4 ? tile.rent[tile.houses + 1] : tile.rent[5];
   return (
     <InfoBox>
-      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#e8edf5' }}>
-        🏗 Bauen: {tile.name}
-      </div>
-      <Row label="Nächste Stufe" value={next} valueColor="#22d3a3" />
-      <Row label="Neue Miete" value={`${newRent}€`} valueColor="#f5a623" />
-      <Row label="Kosten" value={`${tile.housePrice}€`} valueColor={canAfford ? '#22d3a3' : '#ef4444'} />
+      <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6, color: T }}>🏗 Bauen: {tile.name}</div>
+      <Row label="Nächste Stufe" value={next} valueColor={GREEN} />
+      <Row label="Neue Miete" value={`${newRent}€`} valueColor="#c47d0a" />
+      <Row label="Kosten" value={`${tile.housePrice}€`} valueColor={canAfford ? GREEN : '#c42828'} />
       <div style={{
-        fontSize: 10, color: '#f5a623', marginTop: 6, padding: '4px 6px',
-        background: 'rgba(245,166,35,0.08)', borderRadius: 4, border: '1px solid rgba(245,166,35,0.2)',
+        fontSize: 10, color: '#c47d0a', marginTop: 8, padding: '5px 8px',
+        background: '#c47d0a10', borderRadius: 6, border: '1px solid #c47d0a22',
       }}>
-        ⚡ Sonderregel: Nur beim Landen möglich
+        ⚡ Nur beim Landen auf eigenem Feld möglich
       </div>
-      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-        <BigBtn
-          onClick={() => socket.emit('game:build_house', { tilePosition: tilePos })}
-          color="#22d3a3" dark disabled={!canAfford}
-        >
+      <div style={{ display: 'flex', gap: 7, marginTop: 10 }}>
+        <BigBtn onClick={() => socket.emit('game:build_house', { tilePosition: tilePos })} color={GREEN} light disabled={!canAfford}>
           Bauen ({tile.housePrice}€)
         </BigBtn>
-        <SmallBtn onClick={() => socket.emit('game:decline_build')} outline>
-          Skip
-        </SmallBtn>
+        <SmallBtn onClick={() => socket.emit('game:decline_build')} outline>Überspringen</SmallBtn>
       </div>
     </InfoBox>
   );
 }
 
 function PaySection({ pending, players, socket }: { pending: any; players: Player[]; socket: Socket }) {
-  const isRent   = pending.type === 'pay_rent';
-  const isTax    = pending.type === 'pay_tax';
-  const creditor = isRent ? players.find((p: Player) => p.id === pending.toPlayerId) : null;
-
+  const creditor = pending.type === 'pay_rent' ? players.find((p: Player) => p.id === pending.toPlayerId) : null;
   return (
     <div style={{
-      background: '#1a0808', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8,
-      padding: '10px 12px', textAlign: 'center', animation: 'slideUp 0.2s ease both',
+      background: '#fff5f5', border: '1px solid #c4282830',
+      borderRadius: 10, padding: '12px 14px', textAlign: 'center',
+      animation: 'slideUp 0.2s ease both',
     }}>
-      <div style={{ fontSize: 12, color: '#ef4444', fontWeight: 600, marginBottom: 4 }}>
-        {isRent ? '🏠 Miete fällig' : isTax ? '🏛 Steuer fällig' : '🔧 Reparaturkosten'}
+      <div style={{ fontSize: 13, color: '#c42828', fontWeight: 700, marginBottom: 6 }}>
+        {pending.type === 'pay_rent' ? '🏠 Miete fällig' : '🏛 Steuer fällig'}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 800, color: '#e8edf5', margin: '6px 0' }}>
-        {pending.amount}€
-      </div>
-      <div style={{ fontSize: 11, color: '#8899b4', marginBottom: 8 }}>
-        {isRent ? `→ ${creditor?.name ?? 'Spieler'}` : '→ Jackpot'}
+      <div style={{ fontSize: 32, fontWeight: 900, color: T, margin: '6px 0' }}>{pending.amount}€</div>
+      <div style={{ fontSize: 12, color: T2, marginBottom: 10 }}>
+        {creditor ? `→ ${creditor.name}` : '→ Jackpot'}
       </div>
       <button onClick={() => socket.emit('game:confirm_action')} style={{
-        width: '100%', padding: '8px', border: 'none', borderRadius: 7,
-        background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 13,
-        fontFamily: 'inherit',
+        width: '100%', padding: '10px', border: 'none', borderRadius: 9,
+        background: '#c42828', color: '#fff', cursor: 'pointer',
+        fontWeight: 800, fontSize: 14, fontFamily: 'inherit',
       }}>
-        💸 Bezahlen
+        💸 Jetzt bezahlen
       </button>
     </div>
   );

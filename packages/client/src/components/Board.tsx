@@ -2,19 +2,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GameState, Tile, PropertyTile, RailroadTile, UtilityTile, Player } from '../types';
 import { playStep } from '../sounds';
 
-const CORNER = 78;
-const SIDE   = 62;
+const CORNER = 88;
+const SIDE   = 72;
 const BOARD  = CORNER * 2 + SIDE * 9;
 
+// Board colors
+const TILE_BG      = '#faf6ed';
+const TILE_BORDER  = '#cfc0a4';
+const TILE_TEXT    = '#1a1510';
+const TILE_TEXT2   = '#7a6a52';
+const BOARD_BG     = '#1a5c2e';
+
 const COLOR_HEX: Record<string, string> = {
-  brown:    '#7c4a1e',
-  lightblue:'#38bdf8',
-  pink:     '#ec4899',
-  orange:   '#f97316',
-  red:      '#ef4444',
-  yellow:   '#eab308',
-  green:    '#22c55e',
-  darkblue: '#3b82f6',
+  brown:    '#8b5e2a',
+  lightblue:'#29b6e8',
+  pink:     '#e84393',
+  orange:   '#f47316',
+  red:      '#e03030',
+  yellow:   '#d4a012',
+  green:    '#1fa854',
+  darkblue: '#2255d4',
 };
 
 const COLOR_LABEL: Record<string, string> = {
@@ -29,89 +36,25 @@ const COLOR_LABEL: Record<string, string> = {
 };
 
 const TILE_EMOJI: Record<number, string> = {
-  0:  '🏁',
-  1:  '🏚️',
-  2:  '📦',
-  3:  '🏠',
-  4:  '💸',
-  5:  '🚂',
-  6:  '🌊',
-  7:  '❓',
-  8:  '🌅',
-  9:  '🌉',
-  10: '⚖️',
-  11: '🌸',
-  12: '⚡',
-  13: '🌺',
-  14: '🌼',
-  15: '🚆',
-  16: '🛒',
-  17: '📦',
-  18: '🍊',
-  19: '⛪',
-  20: '🅿️',
-  21: '🔴',
-  22: '❓',
-  23: '🥇',
-  24: '🛣️',
-  25: '🚃',
-  26: '👑',
-  27: '🏖️',
-  28: '🛁',
-  29: '⭐',
-  30: '👮',
-  31: '🌿',
-  32: '🏔️',
-  33: '📦',
-  34: '🏞️',
-  35: '🚊',
-  36: '❓',
-  37: '🏛️',
-  38: '💎',
-  39: '🏰',
+  0: '🏁', 1: '🏚️', 2: '📦', 3: '🏠', 4: '💸',
+  5: '🚂', 6: '🌊', 7: '❓', 8: '🌅', 9: '🌉',
+  10:'⚖️', 11:'🌸', 12:'⚡', 13:'🌺', 14:'🌼',
+  15:'🚆', 16:'🛒', 17:'📦', 18:'🍊', 19:'⛪',
+  20:'🅿️', 21:'🔴', 22:'❓', 23:'🥇', 24:'🛣️',
+  25:'🚃', 26:'👑', 27:'🏖️', 28:'🛁', 29:'⭐',
+  30:'👮', 31:'🌿', 32:'🏔️', 33:'📦', 34:'🏞️',
+  35:'🚊', 36:'❓', 37:'🏛️', 38:'💎', 39:'🏰',
 };
 
 const TILE_SHORT: Record<number, string> = {
-  0:  'Los',
-  1:  'Biebrich',
-  2:  'Gemein.',
-  3:  'Schierst.',
-  4:  'Steuer',
-  5:  'Hbf',
-  6:  'Wilhelm',
-  7:  'Ereignis',
-  8:  'Luisen',
-  9:  'Rhein',
-  10: 'Besuch',
-  11: 'Taunus',
-  12: 'Stadtw.',
-  13: 'Sonnenb.',
-  14: 'Adolfs',
-  15: 'Bf Biebr.',
-  16: 'Markt',
-  17: 'Gemein.',
-  18: 'Friedrich',
-  19: 'Kirche',
-  20: 'Parken',
-  21: 'Bleich',
-  22: 'Ereignis',
-  23: 'Gold',
-  24: 'Lang',
-  25: 'Bf Klar.',
-  26: 'K-F-Ring',
-  27: 'Rheinufer',
-  28: 'Therme',
-  29: 'Dernsches',
-  30: 'Gefängnis',
-  31: 'Nerotal',
-  32: 'Neroberg',
-  33: 'Gemein.',
-  34: 'Reisinger',
-  35: 'Bf Dotz.',
-  36: 'Ereignis',
-  37: 'Kurhaus',
-  38: 'Luxusst.',
-  39: 'Schloss',
+  0: 'Los', 1: 'Biebrich', 2: 'Gemein.', 3: 'Schierst.', 4: 'Steuer',
+  5: 'Hbf', 6: 'Wilhelm', 7: 'Ereignis', 8: 'Luisen', 9: 'Rhein',
+  10:'Besuch', 11:'Taunus', 12:'Stadtw.', 13:'Sonnenb.', 14:'Adolfs',
+  15:'Bf Biebr.', 16:'Markt', 17:'Gemein.', 18:'Friedrich', 19:'Kirche',
+  20:'Parken', 21:'Bleich', 22:'Ereignis', 23:'Gold', 24:'Lang',
+  25:'Bf Klar.', 26:'K-F-Ring', 27:'Rheinufer', 28:'Therme', 29:'Dernsches',
+  30:'Gefängnis', 31:'Nerotal', 32:'Neroberg', 33:'Gemein.', 34:'Reisinger',
+  35:'Bf Dotz.', 36:'Ereignis', 37:'Kurhaus', 38:'Luxusst.', 39:'Schloss',
 };
 
 function getInitials(name: string): string {
@@ -123,9 +66,9 @@ function getInitials(name: string): string {
 function gridPos(pos: number): { gridColumn: string; gridRow: string } {
   if (pos === 0)  return { gridColumn: '11', gridRow: '11' };
   if (pos <= 9)   return { gridColumn: `${11 - pos}`, gridRow: '11' };
-  if (pos === 10) return { gridColumn: '1',  gridRow: '11' };
-  if (pos <= 19)  return { gridColumn: '1',  gridRow: `${11 - (pos - 10)}` };
-  if (pos === 20) return { gridColumn: '1',  gridRow: '1' };
+  if (pos === 10) return { gridColumn: '1', gridRow: '11' };
+  if (pos <= 19)  return { gridColumn: '1', gridRow: `${11 - (pos - 10)}` };
+  if (pos === 20) return { gridColumn: '1', gridRow: '1' };
   if (pos <= 29)  return { gridColumn: `${pos - 19}`, gridRow: '1' };
   if (pos === 30) return { gridColumn: '11', gridRow: '1' };
   if (pos <= 39)  return { gridColumn: '11', gridRow: `${pos - 29}` };
@@ -134,11 +77,11 @@ function gridPos(pos: number): { gridColumn: string; gridRow: string } {
 
 function colorBarStyle(pos: number, color: string): React.CSSProperties {
   const base: React.CSSProperties = { position: 'absolute', background: color, zIndex: 1 };
-  if (pos >= 1  && pos <= 9)  return { ...base, top: 0, left: 0, right: 0, height: 8 };
-  if (pos >= 11 && pos <= 19) return { ...base, top: 0, right: 0, bottom: 0, width: 8 };
-  if (pos >= 21 && pos <= 29) return { ...base, bottom: 0, left: 0, right: 0, height: 8 };
-  if (pos >= 31 && pos <= 39) return { ...base, top: 0, left: 0, bottom: 0, width: 8 };
-  return { ...base, top: 0, left: 0, right: 0, height: 6 };
+  if (pos >= 1  && pos <= 9)  return { ...base, top: 0, left: 0, right: 0, height: 14 };
+  if (pos >= 11 && pos <= 19) return { ...base, top: 0, right: 0, bottom: 0, width: 14 };
+  if (pos >= 21 && pos <= 29) return { ...base, bottom: 0, left: 0, right: 0, height: 14 };
+  if (pos >= 31 && pos <= 39) return { ...base, top: 0, left: 0, bottom: 0, width: 14 };
+  return { ...base, top: 0, left: 0, right: 0, height: 8 };
 }
 
 function tileSize(pos: number): React.CSSProperties {
@@ -159,7 +102,6 @@ function useAnimatedPositions(players: Player[]) {
       if (player.isBankrupt) return;
       const from = prevPos.current[player.id];
       const to   = player.position;
-
       if (from === undefined) {
         prevPos.current[player.id] = to;
         setDisplayPos((p) => ({ ...p, [player.id]: to }));
@@ -167,16 +109,13 @@ function useAnimatedPositions(players: Player[]) {
       }
       if (from === to || animating.current.has(player.id)) return;
       prevPos.current[player.id] = to;
-
       const steps = (to - from + 40) % 40;
-
       if (steps === 0 || steps > 12) {
         setDisplayPos((p) => ({ ...p, [player.id]: to }));
         setLandedId(player.id);
         setTimeout(() => setLandedId(null), 600);
         return;
       }
-
       animating.current.add(player.id);
       let step = 0;
       const tick = () => {
@@ -185,21 +124,21 @@ function useAnimatedPositions(players: Player[]) {
         setDisplayPos((p) => ({ ...p, [player.id]: cur }));
         playStep();
         if (step < steps) {
-          setTimeout(tick, 170);
+          setTimeout(tick, 160);
         } else {
           animating.current.delete(player.id);
           setLandedId(player.id);
-          setTimeout(() => setLandedId(null), 700);
+          setTimeout(() => setLandedId(null), 800);
         }
       };
-      setTimeout(tick, 60);
+      setTimeout(tick, 50);
     });
   }, [players]); // eslint-disable-line
 
   return { displayPos, landedId };
 }
 
-// ── Tile detail overlay ──────────────────────────────────────────────────────
+// ── Tile Detail Overlay ───────────────────────────────────────────────────────
 
 function TileDetail({ tile, allPlayers, allTiles, onClose }: {
   tile: Tile; allPlayers: Player[]; allTiles: Tile[]; onClose: () => void;
@@ -209,7 +148,6 @@ function TileDetail({ tile, allPlayers, allTiles, onClose }: {
   const ownerPlayer = ownerId ? allPlayers.find((p) => p.id === ownerId) : null;
   const isMortgaged = (tile as PropertyTile | RailroadTile | UtilityTile).mortgaged ?? false;
 
-  // Count railroads / utilities owned by same owner for rent display
   const rrOwned = ownerPlayer
     ? allTiles.filter((t) => t.type === 'railroad' && (t as RailroadTile).ownerId === ownerId && !(t as RailroadTile).mortgaged).length
     : 0;
@@ -217,79 +155,87 @@ function TileDetail({ tile, allPlayers, allTiles, onClose }: {
     ? allTiles.filter((t) => t.type === 'utility' && (t as UtilityTile).ownerId === ownerId && !(t as UtilityTile).mortgaged).length
     : 0;
 
-  const accentColor = propColor ?? (tile.type === 'railroad' ? '#8899b4' : tile.type === 'utility' ? '#eab308' : '#546a8a');
+  const accentColor = propColor ?? (tile.type === 'railroad' ? '#334466' : tile.type === 'utility' ? '#c47d0a' : '#9e8e78');
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 900, backdropFilter: 'blur(4px)',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: 300, borderRadius: 16,
-          background: '#111827',
-          border: `2px solid ${accentColor}55`,
-          overflow: 'hidden',
-          animation: 'fadeIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
-        }}
-      >
-        {/* Header */}
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(26,20,12,0.6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 900, backdropFilter: 'blur(6px)',
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: 320, borderRadius: 20,
+        background: '#faf6ed',
+        border: `1px solid ${TILE_BORDER}`,
+        overflow: 'hidden',
+        animation: 'popIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+        boxShadow: '0 32px 80px rgba(26,20,12,0.35)',
+      }}>
+        {/* Color bar header */}
         <div style={{
-          padding: '14px 16px 12px',
-          background: accentColor + '22',
-          borderBottom: `1px solid ${accentColor}33`,
+          height: 8, background: accentColor,
+        }} />
+
+        {/* Header content */}
+        <div style={{
+          padding: '18px 20px 14px',
+          background: accentColor + '12',
+          borderBottom: `1px solid ${TILE_BORDER}`,
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: 32, lineHeight: 1, marginBottom: 6 }}>
+          <div style={{ fontSize: 38, lineHeight: 1, marginBottom: 8 }}>
             {TILE_EMOJI[tile.position] ?? '🏠'}
           </div>
           {propColor && (
             <div style={{
-              display: 'inline-block', padding: '2px 10px', borderRadius: 10,
+              display: 'inline-block', padding: '3px 12px', borderRadius: 20,
               background: propColor, color: '#fff',
-              fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', marginBottom: 6,
+              fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', marginBottom: 8,
             }}>
-              {COLOR_LABEL[(tile as PropertyTile).color]}
+              {COLOR_LABEL[(tile as PropertyTile).color]?.toUpperCase()}
             </div>
           )}
-          <div style={{ fontSize: 15, fontWeight: 800, color: '#e8edf5', lineHeight: 1.3 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: TILE_TEXT, lineHeight: 1.3 }}>
             {tile.name}
           </div>
           {isMortgaged && (
-            <div style={{ fontSize: 10, color: '#ef4444', marginTop: 4, fontWeight: 600 }}>
+            <div style={{
+              fontSize: 11, color: '#c42828', marginTop: 6, fontWeight: 700,
+              background: '#c4282812', borderRadius: 6, padding: '3px 10px', display: 'inline-block',
+            }}>
               ⚠ Hypothek aktiv
             </div>
           )}
         </div>
 
         {/* Body */}
-        <div style={{ padding: '14px 16px' }}>
-
-          {/* Owner */}
+        <div style={{ padding: '16px 20px' }}>
+          {/* Owner row */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
-            padding: '8px 12px', borderRadius: 8,
-            background: ownerPlayer ? ownerPlayer.color + '18' : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${ownerPlayer ? ownerPlayer.color + '44' : 'rgba(255,255,255,0.08)'}`,
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+            padding: '10px 14px', borderRadius: 10,
+            background: ownerPlayer ? ownerPlayer.color + '18' : 'rgba(26,20,12,0.05)',
+            border: `1px solid ${ownerPlayer ? ownerPlayer.color + '44' : TILE_BORDER}`,
           }}>
             {ownerPlayer ? (
               <>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: ownerPlayer.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: ownerPlayer.color }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%', background: ownerPlayer.color,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 900, color: '#fff', flexShrink: 0,
+                }}>
+                  {getInitials(ownerPlayer.name)}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: ownerPlayer.color, flex: 1 }}>
                   {ownerPlayer.name}
                 </span>
               </>
             ) : (
-              <span style={{ fontSize: 12, color: '#546a8a', fontStyle: 'italic' }}>Nicht gekauft</span>
+              <span style={{ fontSize: 13, color: TILE_TEXT2, fontStyle: 'italic', flex: 1 }}>Nicht gekauft</span>
             )}
             {(tile as PropertyTile | RailroadTile | UtilityTile).price !== undefined && (
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: '#22d3a3', fontWeight: 700 }}>
+              <span style={{ fontSize: 14, color: '#16884a', fontWeight: 800 }}>
                 {(tile as PropertyTile | RailroadTile | UtilityTile).price}€
               </span>
             )}
@@ -299,115 +245,127 @@ function TileDetail({ tile, allPlayers, allTiles, onClose }: {
           {tile.type === 'property' && (() => {
             const pt = tile as PropertyTile;
             const rows = [
-              { label: 'Basis', value: pt.rent[0] },
-              { label: '1 Haus', value: pt.rent[1] },
-              { label: '2 Häuser', value: pt.rent[2] },
-              { label: '3 Häuser', value: pt.rent[3] },
-              { label: '4 Häuser', value: pt.rent[4] },
-              { label: '🏨 Hotel', value: pt.rent[5] },
+              { label: 'Basis', v: pt.rent[0] },
+              { label: '1 Haus 🏠', v: pt.rent[1] },
+              { label: '2 Häuser 🏠🏠', v: pt.rent[2] },
+              { label: '3 Häuser', v: pt.rent[3] },
+              { label: '4 Häuser', v: pt.rent[4] },
+              { label: '🏨 Hotel', v: pt.rent[5] },
             ];
             return (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 9, color: '#546a8a', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 600 }}>MIETE</div>
-                {rows.map(({ label, value }, i) => (
-                  <div key={i} style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    fontSize: 12, padding: '3px 0',
-                    color: pt.houses === i ? '#22d3a3' : '#8899b4',
-                    fontWeight: pt.houses === i ? 700 : 400,
-                    borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  }}>
-                    <span>{label}</span>
-                    <span style={{ color: pt.houses === i ? '#22d3a3' : '#546a8a' }}>{value}€</span>
-                  </div>
-                ))}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{
+                  fontSize: 10, color: TILE_TEXT2, fontWeight: 700,
+                  letterSpacing: '0.12em', marginBottom: 8,
+                }}>MIETE</div>
+                <div style={{ border: `1px solid ${TILE_BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+                  {rows.map(({ label, v }, i) => {
+                    const isActive = pt.houses === i;
+                    return (
+                      <div key={i} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '7px 12px',
+                        background: isActive ? accentColor + '18' : i % 2 === 0 ? '#fff' : '#f8f4ec',
+                        borderBottom: i < rows.length - 1 ? `1px solid ${TILE_BORDER}` : 'none',
+                      }}>
+                        <span style={{ fontSize: 12, color: isActive ? TILE_TEXT : TILE_TEXT2, fontWeight: isActive ? 700 : 400 }}>{label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? accentColor : TILE_TEXT }}>{v}€</span>
+                      </div>
+                    );
+                  })}
+                </div>
                 <div style={{
                   display: 'flex', justifyContent: 'space-between',
-                  fontSize: 11, color: '#546a8a', marginTop: 8,
+                  fontSize: 11, color: TILE_TEXT2, marginTop: 6, padding: '0 4px',
                 }}>
-                  <span>Hauspreis</span>
-                  <span>{pt.housePrice}€</span>
+                  <span>Hauskosten</span>
+                  <span style={{ fontWeight: 600, color: '#16884a' }}>{pt.housePrice}€</span>
                 </div>
               </div>
             );
           })()}
 
-          {/* Railroad rent table */}
+          {/* Railroad */}
           {tile.type === 'railroad' && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#546a8a', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 600 }}>MIETE</div>
-              {[25, 50, 75, 100].map((rent, i) => (
-                <div key={i} style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  fontSize: 12, padding: '3px 0',
-                  color: rrOwned === i + 1 && ownerPlayer ? '#22d3a3' : '#8899b4',
-                  fontWeight: rrOwned === i + 1 && ownerPlayer ? 700 : 400,
-                  borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                }}>
-                  <span>{i + 1} Bahnhof{i > 0 ? 'höfe' : ''}</span>
-                  <span>{rent}€</span>
-                </div>
-              ))}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, color: TILE_TEXT2, fontWeight: 700, letterSpacing: '0.12em', marginBottom: 8 }}>MIETE</div>
+              <div style={{ border: `1px solid ${TILE_BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+                {[25, 50, 75, 100].map((rent, i) => {
+                  const isActive = rrOwned === i + 1 && !!ownerPlayer;
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '7px 12px',
+                      background: isActive ? '#33446618' : i % 2 === 0 ? '#fff' : '#f8f4ec',
+                      borderBottom: i < 3 ? `1px solid ${TILE_BORDER}` : 'none',
+                    }}>
+                      <span style={{ fontSize: 12, color: TILE_TEXT2 }}>{i + 1} Bahnhof{i > 0 ? 'höfe' : ''}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? '#334466' : TILE_TEXT }}>{rent}€</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Utility info */}
+          {/* Utility */}
           {tile.type === 'utility' && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, color: '#546a8a', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 600 }}>MIETE</div>
-              {[
-                { label: '1 Werk', mult: 4 },
-                { label: '2 Werke', mult: 10 },
-              ].map(({ label, mult }, i) => (
-                <div key={i} style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  fontSize: 12, padding: '3px 0',
-                  color: utOwned === i + 1 && ownerPlayer ? '#22d3a3' : '#8899b4',
-                  fontWeight: utOwned === i + 1 && ownerPlayer ? 700 : 400,
-                  borderBottom: i === 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                }}>
-                  <span>{label}</span>
-                  <span>{mult}× Würfel</span>
-                </div>
-              ))}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, color: TILE_TEXT2, fontWeight: 700, letterSpacing: '0.12em', marginBottom: 8 }}>MIETE</div>
+              <div style={{ border: `1px solid ${TILE_BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+                {[{ label: '1 Werk', mult: 4 }, { label: '2 Werke', mult: 10 }].map(({ label, mult }, i) => {
+                  const isActive = utOwned === i + 1 && !!ownerPlayer;
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '7px 12px',
+                      background: isActive ? '#c47d0a18' : i % 2 === 0 ? '#fff' : '#f8f4ec',
+                      borderBottom: i === 0 ? `1px solid ${TILE_BORDER}` : 'none',
+                    }}>
+                      <span style={{ fontSize: 12, color: TILE_TEXT2 }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? '#c47d0a' : TILE_TEXT }}>{mult}× Würfel</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Tax info */}
+          {/* Tax */}
           {tile.type === 'tax' && (
-            <div style={{
-              textAlign: 'center', fontSize: 22, fontWeight: 900,
-              color: '#ef4444', marginBottom: 14,
-            }}>
-              {(tile as { amount: number }).amount}€ → Jackpot
+            <div style={{ textAlign: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#c42828' }}>
+                {(tile as { amount: number }).amount}€
+              </div>
+              <div style={{ fontSize: 12, color: TILE_TEXT2, marginTop: 4 }}>→ Jackpot</div>
             </div>
           )}
 
-          {/* Houses indicator for property */}
+          {/* Houses */}
           {tile.type === 'property' && (tile as PropertyTile).houses > 0 && (
-            <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 10 }}>
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14 }}>
               {(tile as PropertyTile).houses === 5
-                ? <div style={{ background: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6 }}>🏨 Hotel</div>
+                ? <div style={{
+                    background: '#e03030', color: '#fff', fontSize: 12,
+                    fontWeight: 800, padding: '4px 14px', borderRadius: 8,
+                  }}>🏨 Hotel</div>
                 : Array.from({ length: (tile as PropertyTile).houses }, (_, i) => (
-                    <div key={i} style={{ width: 16, height: 16, background: '#22c55e', borderRadius: 3 }} />
+                    <div key={i} style={{ width: 20, height: 20, background: '#1fa854', borderRadius: 4 }} />
                   ))
               }
             </div>
           )}
 
           {/* Close button */}
-          <button
-            onClick={onClose}
-            style={{
-              width: '100%', padding: '10px', border: 'none', borderRadius: 10,
-              background: accentColor + 'cc', color: '#000',
-              cursor: 'pointer', fontWeight: 800, fontSize: 14, fontFamily: 'inherit',
-              transition: 'transform 0.1s',
-            }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
-            onMouseUp={(e)   => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            ✕ Schließen
+          <button onClick={onClose} style={{
+            width: '100%', padding: '12px', border: 'none', borderRadius: 12,
+            background: TILE_TEXT, color: '#faf6ed',
+            cursor: 'pointer', fontWeight: 700, fontSize: 14, fontFamily: 'inherit',
+            transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
+            Schließen
           </button>
         </div>
       </div>
@@ -415,7 +373,7 @@ function TileDetail({ tile, allPlayers, allTiles, onClose }: {
   );
 }
 
-// ── TileCell ─────────────────────────────────────────────────────────────────
+// ── TileCell ──────────────────────────────────────────────────────────────────
 
 function TileCell({
   tile, players, displayPos, landedId, myPlayerId, isActive, allPlayers, onClick,
@@ -424,16 +382,16 @@ function TileCell({
   landedId: string | null; myPlayerId: string; isActive: boolean;
   allPlayers: Player[]; onClick: () => void;
 }) {
-  const pos = tile.position;
-  const sz  = tileSize(pos);
-  const isCorner = pos === 0 || pos === 10 || pos === 20 || pos === 30;
+  const pos       = tile.position;
+  const sz        = tileSize(pos);
+  const isCorner  = pos === 0 || pos === 10 || pos === 20 || pos === 30;
   const propColor = tile.type === 'property' ? COLOR_HEX[(tile as PropertyTile).color] : undefined;
   const ownerColor = (() => {
     const t = tile as PropertyTile | RailroadTile | UtilityTile;
     return t.ownerId ? allPlayers.find((p) => p.id === t.ownerId)?.color : undefined;
   })();
-  const isMortgaged = (tile as PropertyTile | RailroadTile | UtilityTile).mortgaged ?? false;
-  const houses = tile.type === 'property' ? (tile as PropertyTile).houses : 0;
+  const isMortgaged  = (tile as PropertyTile | RailroadTile | UtilityTile).mortgaged ?? false;
+  const houses       = tile.type === 'property' ? (tile as PropertyTile).houses : 0;
   const visiblePlayers = players.filter((p) => !p.isBankrupt && displayPos[p.id] === pos);
 
   const tileEmoji = TILE_EMOJI[pos] ?? '';
@@ -444,26 +402,30 @@ function TileCell({
       onClick={onClick}
       style={{
         ...sz, ...gridPos(pos), position: 'relative',
-        background: isActive ? '#162040' : '#0d1830',
-        border: `1px solid ${isActive ? '#2d5fa0' : '#182640'}`,
-        overflow: 'hidden',
-        outline: isActive ? '2px solid rgba(232,67,147,0.35)' : 'none',
-        outlineOffset: '-2px',
-        transition: 'background 0.3s, outline 0.3s',
-        cursor: 'pointer',
+        background: isActive ? '#fffbe8' : TILE_BG,
+        border: `1px solid ${isActive ? '#e8357a' : TILE_BORDER}`,
+        overflow: 'hidden', cursor: 'pointer',
+        animation: isActive ? 'tileGlow 1.8s ease-in-out infinite' : 'none',
+        transition: 'background 0.25s',
+        zIndex: isActive ? 2 : 1,
       }}
       title={`${pos}: ${tile.name}`}
     >
       {/* Color bar */}
       {propColor && !isMortgaged && <div style={colorBarStyle(pos, propColor)} />}
-      {isMortgaged && <div style={{ ...colorBarStyle(pos, '#334'), opacity: 0.5 }} />}
+      {isMortgaged && (
+        <div style={{ ...colorBarStyle(pos, '#c4b898'), opacity: 0.5 }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.4) 3px, rgba(255,255,255,0.4) 5px)' }} />
+        </div>
+      )}
 
       {/* Owner dot */}
       {ownerColor && (
         <div style={{
-          position: 'absolute', top: 10, right: 3, width: 7, height: 7,
-          borderRadius: '50%', background: ownerColor, zIndex: 2,
-          boxShadow: `0 0 5px ${ownerColor}88`,
+          position: 'absolute', top: isCorner ? 14 : 4, right: 4,
+          width: 8, height: 8, borderRadius: '50%',
+          background: ownerColor, zIndex: 3,
+          boxShadow: `0 0 0 2px ${TILE_BG}, 0 0 6px ${ownerColor}88`,
         }} />
       )}
 
@@ -471,36 +433,40 @@ function TileCell({
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: 2, paddingTop: propColor ? 12 : 4,
-        opacity: isMortgaged ? 0.4 : 1, gap: 1,
+        justifyContent: 'center',
+        padding: isCorner ? 4 : 2,
+        paddingTop: propColor ? (isCorner ? 4 : 18) : (isCorner ? 4 : 4),
+        opacity: isMortgaged ? 0.45 : 1,
+        gap: 2,
       }}>
         {isCorner ? (
           <>
-            <div style={{ fontSize: 22, lineHeight: 1 }}>{tileEmoji}</div>
+            <div style={{ fontSize: 26, lineHeight: 1 }}>{tileEmoji}</div>
             <div style={{
-              fontSize: 8, fontWeight: 700, textAlign: 'center',
-              color: '#c8d8f0', lineHeight: 1.2,
-              wordBreak: 'break-word', maxWidth: '100%', padding: '0 2px',
+              fontSize: 8.5, fontWeight: 700, textAlign: 'center',
+              color: TILE_TEXT, lineHeight: 1.2,
+              wordBreak: 'break-word', maxWidth: '100%', padding: '0 4px', marginTop: 2,
             }}>{tile.name}</div>
           </>
         ) : (
           <>
-            <div style={{ fontSize: 15, lineHeight: 1 }}>{tileEmoji}</div>
+            <div style={{ fontSize: 17, lineHeight: 1 }}>{tileEmoji}</div>
             <div style={{
-              fontSize: 6, fontWeight: 600, textAlign: 'center',
-              color: '#8899b4', lineHeight: 1.2, marginTop: 1,
-              maxWidth: '100%', padding: '0 1px',
+              fontSize: 6.5, fontWeight: 600, textAlign: 'center',
+              color: TILE_TEXT2, lineHeight: 1.2, marginTop: 1,
+              maxWidth: '100%', padding: '0 2px',
               overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
             }}>{shortName}</div>
           </>
         )}
 
+        {/* Houses */}
         {houses > 0 && (
           <div style={{ display: 'flex', gap: 1, marginTop: 1 }}>
             {houses === 5
-              ? <div style={{ background: '#ef4444', color: '#fff', fontSize: 5, fontWeight: 800, padding: '1px 3px', borderRadius: 2 }}>H</div>
+              ? <div style={{ background: '#e03030', color: '#fff', fontSize: 5.5, fontWeight: 800, padding: '1px 4px', borderRadius: 3 }}>H</div>
               : Array.from({ length: houses }, (_, i) => (
-                  <div key={i} style={{ width: 5, height: 5, background: '#22c55e', borderRadius: 1 }} />
+                  <div key={i} style={{ width: 6, height: 6, background: '#1fa854', borderRadius: 1 }} />
                 ))
             }
           </div>
@@ -510,21 +476,24 @@ function TileCell({
       {/* Player tokens */}
       {visiblePlayers.length > 0 && (
         <div style={{
-          position: 'absolute', bottom: 2, left: 2, right: 2,
+          position: 'absolute', bottom: 3, left: 3, right: 3,
           display: 'flex', flexWrap: 'wrap', gap: 2, zIndex: 10,
+          justifyContent: visiblePlayers.length === 1 ? 'center' : 'flex-start',
         }}>
-          {visiblePlayers.map((p, idx) => {
+          {visiblePlayers.map((p) => {
             const isLanding = landedId === p.id;
-            const isMe = p.id === myPlayerId;
+            const isMe      = p.id === myPlayerId;
             return (
               <div key={p.id} title={p.name} style={{
-                width: 22, height: 22, borderRadius: '50%', background: p.color,
-                border: isMe ? '2px solid #fff' : '1.5px solid rgba(255,255,255,0.3)',
+                width: 24, height: 24, borderRadius: '50%', background: p.color,
+                border: `2px solid ${isMe ? '#fff' : 'rgba(255,255,255,0.5)'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 8, fontWeight: 900, color: '#fff', flexShrink: 0,
                 letterSpacing: '-0.5px',
-                animation: isLanding ? 'tokenLand 0.6s cubic-bezier(0.36,0.07,0.19,0.97) both' : 'none',
-                boxShadow: isMe ? `0 0 8px ${p.color}` : `0 1px 4px rgba(0,0,0,0.5)`,
+                animation: isLanding ? 'tokenLand 0.7s cubic-bezier(0.36,0.07,0.19,0.97) both' : 'none',
+                boxShadow: isMe
+                  ? `0 0 0 2px #fff, 0 0 10px ${p.color}88`
+                  : `0 2px 6px rgba(26,20,12,0.35)`,
               }}>
                 {getInitials(p.name)}
               </div>
@@ -536,7 +505,7 @@ function TileCell({
   );
 }
 
-// ── Board ────────────────────────────────────────────────────────────────────
+// ── Board ─────────────────────────────────────────────────────────────────────
 
 export default function Board({ gameState, myPlayerId }: { gameState: GameState; myPlayerId: string }) {
   const { tiles, players, currentTurn, jackpot } = gameState;
@@ -551,8 +520,12 @@ export default function Board({ gameState, myPlayerId }: { gameState: GameState;
         gridTemplateColumns: `${CORNER}px repeat(9, ${SIDE}px) ${CORNER}px`,
         gridTemplateRows:    `${CORNER}px repeat(9, ${SIDE}px) ${CORNER}px`,
         width: BOARD, height: BOARD,
-        background: '#0d1830', border: '2px solid #1e3a5f', borderRadius: 6, flexShrink: 0,
-        touchAction: 'manipulation',
+        background: BOARD_BG,
+        border: `3px solid ${BOARD_BG}`,
+        borderRadius: 8,
+        flexShrink: 0,
+        gap: 1,
+        boxShadow: '0 8px 40px rgba(26,20,12,0.35)',
       }}>
         {tiles.map((tile) => (
           <TileCell
@@ -568,42 +541,54 @@ export default function Board({ gameState, myPlayerId }: { gameState: GameState;
         <div style={{
           gridColumn: '2 / 11', gridRow: '2 / 11',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', gap: 12, background: '#0a1525', padding: 16,
+          justifyContent: 'center', gap: 14,
+          background: '#f5f0e6',
+          padding: 20,
         }}>
-          {/* Latest event display */}
+          {/* Latest event */}
           {gameState.eventLog.length > 0 && (
             <div key={gameState.eventLog.length} style={{
-              fontSize: 12, color: '#22d3a3', textAlign: 'center',
-              animation: 'slideUp 0.3s ease both',
-              maxWidth: 260, lineHeight: 1.5,
-              background: 'rgba(34,211,163,0.08)',
-              border: '1px solid rgba(34,211,163,0.2)',
-              borderRadius: 8, padding: '7px 14px',
-              fontWeight: 600,
+              fontSize: 12, fontWeight: 600,
+              color: '#16884a', textAlign: 'center',
+              animation: 'slideDown 0.3s ease both',
+              maxWidth: 270, lineHeight: 1.5,
+              background: '#16884a14',
+              border: '1px solid #16884a30',
+              borderRadius: 10, padding: '7px 14px',
             }}>
               {gameState.eventLog[gameState.eventLog.length - 1]}
             </div>
           )}
 
+          {/* Title */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 900, color: '#e84393', letterSpacing: '0.12em' }}>
+            <div style={{
+              fontFamily: "'DM Serif Display', Georgia, serif",
+              fontSize: 32, fontWeight: 400, color: '#e8357a',
+              letterSpacing: '0.06em', lineHeight: 1,
+            }}>
               WIESBADEN
             </div>
-            <div style={{ fontSize: 10, color: '#546a8a', letterSpacing: '0.4em', marginTop: 3 }}>
+            <div style={{
+              fontSize: 9, color: '#9e8e78', letterSpacing: '0.5em',
+              marginTop: 4, fontWeight: 600,
+            }}>
               MONOPOLY
             </div>
           </div>
 
+          {/* Jackpot */}
           {jackpot.amount > 0 && (
             <div style={{
-              background: '#120f00', border: '1px solid #4a3a00', borderRadius: 8,
-              padding: '8px 16px', textAlign: 'center',
+              background: '#fff8e8',
+              border: '1px solid #d4a01244',
+              borderRadius: 10, padding: '8px 18px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: 8, color: '#8a7a30', marginBottom: 3, letterSpacing: '0.1em' }}>
+              <div style={{ fontSize: 8, color: '#9a7820', marginBottom: 3, fontWeight: 700, letterSpacing: '0.1em' }}>
                 🅿 FREIPARKEN JACKPOT
               </div>
               <div style={{
-                fontSize: 20, fontWeight: 800, color: '#f5a623',
+                fontSize: 22, fontWeight: 900, color: '#c47d0a',
                 animation: 'jackpotPulse 2s ease-in-out infinite',
               }}>
                 {jackpot.amount.toLocaleString('de-DE')}€
@@ -611,53 +596,63 @@ export default function Board({ gameState, myPlayerId }: { gameState: GameState;
             </div>
           )}
 
+          {/* Winner */}
           {gameState.gamePhase === 'finished' && (
             <div style={{
-              background: '#0a2000', border: '1px solid #3a8000', borderRadius: 10,
-              padding: '10px 20px', textAlign: 'center',
+              background: '#f0fff4', border: '1px solid #16884a44',
+              borderRadius: 12, padding: '10px 22px', textAlign: 'center',
               animation: 'glowPulse 1.5s ease-in-out infinite',
             }}>
-              <div style={{ fontSize: 10, color: '#88cc44' }}>🏆 GEWINNER</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#ccff44', marginTop: 2 }}>
+              <div style={{ fontSize: 10, color: '#16884a', fontWeight: 700 }}>🏆 GEWINNER</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1a1510', marginTop: 2 }}>
                 {players.find((p) => p.id === gameState.winner)?.name}
               </div>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 280 }}>
+          {/* Color swatches */}
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 260 }}>
             {Object.entries(COLOR_HEX).map(([name, color]) => (
-              <div key={name} style={{ width: 14, height: 14, borderRadius: 3, background: color, opacity: 0.75 }} title={name} />
+              <div key={name} style={{
+                width: 16, height: 16, borderRadius: 4,
+                background: color, border: '1px solid rgba(26,20,12,0.15)',
+              }} title={name} />
             ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%', maxWidth: 200 }}>
-            {players.filter((p) => !p.isBankrupt).map((p) => (
-              <div key={p.id} style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontSize: 10, color: '#8899b4',
-              }}>
-                <div style={{
-                  width: 11, height: 11, borderRadius: '50%', background: p.color, flexShrink: 0,
-                  boxShadow: p.id === currentTurn.playerId ? `0 0 6px ${p.color}` : 'none',
-                }} />
-                <div style={{ flex: 1, fontWeight: p.id === currentTurn.playerId ? 700 : 400 }}>
-                  {p.name}
+          {/* Players mini list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, width: '100%', maxWidth: 210 }}>
+            {players.filter((p) => !p.isBankrupt).map((p) => {
+              const isActive = p.id === currentTurn.playerId;
+              return (
+                <div key={p.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '5px 8px', borderRadius: 8,
+                  background: isActive ? p.color + '18' : 'rgba(26,20,12,0.04)',
+                  border: `1px solid ${isActive ? p.color + '44' : 'transparent'}`,
+                  transition: 'all 0.3s',
+                }}>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: '50%', background: p.color,
+                    boxShadow: isActive ? `0 0 6px ${p.color}` : 'none',
+                    flexShrink: 0,
+                  }} />
+                  <div style={{ flex: 1, fontSize: 10, fontWeight: isActive ? 700 : 500, color: TILE_TEXT }}>
+                    {p.name}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#16884a' }}>
+                    {p.money.toLocaleString('de-DE')}€
+                  </div>
                 </div>
-                <div style={{ color: '#22d3a3', fontWeight: 600, fontSize: 9 }}>
-                  {p.money.toLocaleString('de-DE')}€
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Tile detail overlay */}
       {selectedTile && (
         <TileDetail
-          tile={selectedTile}
-          allPlayers={players}
-          allTiles={tiles}
+          tile={selectedTile} allPlayers={players} allTiles={tiles}
           onClose={() => setSelectedTile(null)}
         />
       )}

@@ -1,9 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Player, Tile, PropertyTile, RailroadTile, UtilityTile } from '../types';
 
+const S  = '#ffffff';
+const B  = '#d0c4aa';
+const T  = '#1a1510';
+const T2 = '#6b5a42';
+const T3 = '#9e8e78';
+const GREEN = '#16884a';
+
 const COLOR_HEX: Record<string, string> = {
-  brown:'#7c4a1e', lightblue:'#38bdf8', pink:'#ec4899', orange:'#f97316',
-  red:'#ef4444', yellow:'#eab308', green:'#22c55e', darkblue:'#3b82f6',
+  brown:'#8b5e2a', lightblue:'#29b6e8', pink:'#e84393', orange:'#f47316',
+  red:'#e03030', yellow:'#d4a012', green:'#1fa854', darkblue:'#2255d4',
 };
 
 function netWorth(player: Player, tiles: Tile[]): number {
@@ -26,41 +33,45 @@ function netWorth(player: Player, tiles: Tile[]): number {
   return w;
 }
 
-function AnimatedNumber({ value }: { value: number }) {
+function AnimatedNumber({ value, color }: { value: number; color?: string }) {
   const [display, setDisplay] = useState(value);
-  const [flash, setFlash]     = useState(false);
+  const [flash,   setFlash]   = useState<'up' | 'down' | null>(null);
   const prev = useRef(value);
 
   useEffect(() => {
     if (prev.current !== value) {
+      setFlash(value > prev.current ? 'up' : 'down');
+      setTimeout(() => setFlash(null), 700);
       prev.current = value;
-      setFlash(true);
-      setTimeout(() => setFlash(false), 600);
     }
     setDisplay(value);
   }, [value]);
 
   return (
     <span style={{
-      transition: 'color 0.3s',
-      color: flash ? '#22d3a3' : undefined,
+      color: flash === 'up' ? GREEN : flash === 'down' ? '#c42828' : (color ?? T),
+      transition: 'color 0.4s',
+      fontWeight: 700,
     }}>
       {display.toLocaleString('de-DE')}€
     </span>
   );
 }
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
 interface Props {
-  players: Player[];
-  tiles: Tile[];
-  currentPlayerId: string;
-  myPlayerId: string;
-  winCondition: number;
+  players: Player[]; tiles: Tile[];
+  currentPlayerId: string; myPlayerId: string; winCondition: number;
 }
 
 export default function PlayerPanel({ players, tiles, currentPlayerId, myPlayerId, winCondition }: Props) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {players.map((player) => {
         const isActive = player.id === currentPlayerId;
         const isMe     = player.id === myPlayerId;
@@ -75,111 +86,108 @@ export default function PlayerPanel({ players, tiles, currentPlayerId, myPlayerI
 
         return (
           <div key={player.id} style={{
-            background: '#111827',
-            borderRadius: 12,
-            padding: '10px 12px',
-            border: `1px solid ${isActive ? player.color + '55' : '#1e3a5f'}`,
-            opacity: player.isBankrupt ? 0.45 : 1,
-            transition: 'border-color 0.4s',
-            boxShadow: isActive ? `0 0 0 1px ${player.color}44, 0 0 16px ${player.color}18` : 'none',
-            position: 'relative',
-            overflow: 'hidden',
+            background: S, borderRadius: 14, padding: '12px 14px',
+            border: `1px solid ${isActive ? player.color + '66' : B}`,
+            opacity: player.isBankrupt ? 0.5 : 1,
+            transition: 'border-color 0.4s, box-shadow 0.4s',
+            boxShadow: isActive
+              ? `0 0 0 2px ${player.color}22, 0 4px 20px ${player.color}18`
+              : '0 1px 4px rgba(26,20,12,0.08)',
+            position: 'relative', overflow: 'hidden',
           }}>
-            {/* Left accent bar */}
+            {/* Left accent */}
             <div style={{
-              position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+              position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
               background: player.color,
-              opacity: isActive ? 1 : 0.35,
+              opacity: isActive ? 1 : 0.3,
               transition: 'opacity 0.4s',
-              borderRadius: '12px 0 0 12px',
+              borderRadius: '14px 0 0 14px',
             }} />
 
-            <div style={{ paddingLeft: 6 }}>
+            <div style={{ paddingLeft: 10 }}>
               {/* Name row */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap',
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                {/* Avatar */}
                 <div style={{
-                  width: 10, height: 10, borderRadius: '50%', background: player.color,
-                  boxShadow: isActive ? `0 0 8px ${player.color}` : 'none',
-                  flexShrink: 0, transition: 'box-shadow 0.4s',
-                }} />
-                <span style={{ fontWeight: 700, fontSize: 13, flex: 1 }}>{player.name}</span>
-                {isMe && (
-                  <span style={{
-                    background: '#22d3a3', color: '#000', fontSize: 9, fontWeight: 800,
-                    padding: '1px 5px', borderRadius: 4,
-                  }}>ICH</span>
-                )}
-                {isActive && !player.isBankrupt && (
-                  <span style={{
-                    background: player.color + '33', color: player.color, fontSize: 9,
-                    fontWeight: 700, padding: '1px 5px', borderRadius: 4,
-                    border: `1px solid ${player.color}44`,
-                  }}>▶ Zug</span>
-                )}
-                {player.isBankrupt && (
-                  <span style={{
-                    background: '#ef444422', color: '#ef4444', fontSize: 9,
-                    fontWeight: 700, padding: '1px 5px', borderRadius: 4,
-                  }}>BANKROTT</span>
-                )}
-                {player.inJail && (
-                  <span style={{ fontSize: 10, color: '#f5a623' }}>🔒 {player.jailTurns}/3</span>
-                )}
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: player.color,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 900, color: '#fff', flexShrink: 0,
+                  boxShadow: isActive ? `0 0 10px ${player.color}66` : `0 2px 6px ${player.color}44`,
+                  transition: 'box-shadow 0.4s',
+                }}>
+                  {getInitials(player.name)}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: 14, color: T }}>{player.name}</span>
+                    {isMe && (
+                      <span style={{ background: '#e8357a', color: '#fff', fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 4 }}>ICH</span>
+                    )}
+                    {isActive && !player.isBankrupt && (
+                      <span style={{
+                        background: player.color + '22', color: player.color,
+                        fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                        border: `1px solid ${player.color}44`,
+                      }}>▶ Zug</span>
+                    )}
+                    {player.isBankrupt && (
+                      <span style={{ background: '#c4282818', color: '#c42828', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4 }}>BANKROTT</span>
+                    )}
+                    {player.inJail && (
+                      <span style={{ fontSize: 11 }}>🔒 {player.jailTurns}/3</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Money */}
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: 12, marginBottom: 4,
-              }}>
-                <span style={{ color: '#8899b4' }}>Bargeld</span>
-                <span style={{ fontWeight: 700, color: '#22d3a3', fontSize: 14 }}>
-                  <AnimatedNumber value={player.money} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, color: T3, fontWeight: 500 }}>Bargeld</span>
+                <span style={{ fontSize: 16, letterSpacing: '-0.3px' }}>
+                  <AnimatedNumber value={player.money} color={GREEN} />
                 </span>
               </div>
 
               {/* Net worth + progress */}
-              <div style={{ marginBottom: 6 }}>
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  fontSize: 11, marginBottom: 3,
-                }}>
-                  <span style={{ color: '#546a8a' }}>Nettovermögen</span>
-                  <span style={{
-                    fontWeight: 600, fontSize: 12,
-                    color: worth >= winCondition * 0.85 ? '#22c55e' : '#8899b4',
-                  }}>
-                    <AnimatedNumber value={worth} />
+              <div style={{ marginBottom: myProps.length > 0 ? 8 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                  <span style={{ fontSize: 10, color: T3 }}>Nettovermögen</span>
+                  <span style={{ fontSize: 12 }}>
+                    <AnimatedNumber value={worth} color={worth >= winCondition * 0.85 ? GREEN : T2} />
                   </span>
                 </div>
-                <div style={{ height: 4, background: '#1a2540', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{
+                  height: 6, background: '#f0ead8', borderRadius: 3, overflow: 'hidden',
+                  border: `1px solid ${B}`,
+                }}>
                   <div style={{
-                    height: '100%', background: player.color, borderRadius: 2,
-                    width: `${pct}%`, transition: 'width 0.5s ease', willChange: 'width',
+                    height: '100%', background: `linear-gradient(90deg, ${player.color}, ${player.color}cc)`,
+                    borderRadius: 3, width: `${pct}%`, transition: 'width 0.6s ease',
+                    willChange: 'width',
                   }} />
                 </div>
-                <div style={{ fontSize: 9, color: '#546a8a', marginTop: 2, textAlign: 'right' }}>
+                <div style={{ fontSize: 9, color: T3, marginTop: 3, textAlign: 'right' }}>
                   Ziel: {winCondition.toLocaleString('de-DE')}€
                 </div>
               </div>
 
               {/* Properties */}
               {myProps.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {myProps.map((t) => {
-                    const isProp = t.type === 'property';
-                    const prop   = isProp ? (t as PropertyTile) : null;
-                    const isMort = (t as PropertyTile | RailroadTile | UtilityTile).mortgaged;
-                    const bg     = isProp ? (COLOR_HEX[prop!.color] ?? '#555') : t.type === 'railroad' ? '#334' : '#224';
+                    const isProp  = t.type === 'property';
+                    const prop    = isProp ? (t as PropertyTile) : null;
+                    const isMort  = (t as PropertyTile | RailroadTile | UtilityTile).mortgaged;
+                    const bg      = isProp ? (COLOR_HEX[prop!.color] ?? '#888') : t.type === 'railroad' ? '#334466' : '#5a7a44';
                     return (
-                      <div key={t.position} title={`${t.name}${isMort ? ' (hypothek)' : ''}`} style={{
-                        width: 16, height: 16, borderRadius: 3, background: bg,
-                        opacity: isMort ? 0.35 : 0.9,
-                        border: isMort ? '1px dashed #8899b4' : 'none',
+                      <div key={t.position} title={`${t.name}${isMort ? ' (Hypothek)' : ''}`} style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        background: isMort ? '#ccc' : bg,
+                        border: isMort ? `1px dashed ${B}` : '1px solid rgba(26,20,12,0.15)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 8, fontWeight: 800, color: '#fff',
+                        fontSize: 8, fontWeight: 900, color: '#fff',
                       }}>
                         {t.type === 'railroad' ? '🚂' : t.type === 'utility' ? '⚡'
                           : prop!.houses === 5 ? 'H' : prop!.houses > 0 ? prop!.houses : ''}

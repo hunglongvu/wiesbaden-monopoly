@@ -9,11 +9,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="WI Monopoly" />
     <link rel="apple-touch-icon" href="/icon.svg" />
-    <meta name="theme-color" content="#e84393" />
+    <meta name="theme-color" content="#e8357a" />
     <title>Wiesbaden Monopoly</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Serif+Display&display=swap" rel="stylesheet" />
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -22,19 +22,27 @@
         --safe-bottom: env(safe-area-inset-bottom, 0px);
         --safe-left:   env(safe-area-inset-left, 0px);
         --safe-right:  env(safe-area-inset-right, 0px);
-        --bg:       #0b1120;
-        --surface:  #111827;
-        --surface2: #1a2540;
-        --border:   #1e3a5f;
-        --border2:  #243a5e;
-        --text:     #e8edf5;
-        --text2:    #8899b4;
-        --text3:    #546a8a;
-        --accent:   #e84393;
-        --green:    #22d3a3;
-        --yellow:   #f5a623;
-        --red:      #ef4444;
-        --blue:     #3b82f6;
+
+        /* Warm cream palette */
+        --bg:        #e8e0d0;
+        --surface:   #ffffff;
+        --surface2:  #f5f0e6;
+        --tile-bg:   #faf6ed;
+        --border:    #d0c4aa;
+        --border2:   #b8aa90;
+        --text:      #1a1510;
+        --text2:     #6b5a42;
+        --text3:     #9e8e78;
+        --accent:    #e8357a;
+        --green:     #16884a;
+        --teal:      #0e9880;
+        --gold:      #c47d0a;
+        --red:       #c42828;
+        --blue:      #2252c8;
+        --board-bg:  #1a5c2e;
+        --board-mid: #1e6a34;
+        --shadow:    rgba(80, 60, 30, 0.18);
+        --shadow-lg: rgba(80, 60, 30, 0.28);
       }
 
       html { height: 100%; }
@@ -54,65 +62,71 @@
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+      /* ── Animations ─────────────────────────────────────────────── */
       @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to   { opacity: 1; transform: scale(1); }
+        from { opacity: 0; transform: scale(0.92) translateY(6px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      @keyframes popIn {
+        0%   { opacity: 0; transform: scale(0.7); }
+        65%  { transform: scale(1.05); }
+        85%  { transform: scale(0.97); }
+        100% { opacity: 1; transform: scale(1); }
       }
       @keyframes slideUp {
-        from { opacity: 0; transform: translateY(14px); }
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
       @keyframes slideLeft {
-        from { opacity: 0; transform: translateX(18px); }
+        from { opacity: 0; transform: translateX(20px); }
         to   { opacity: 1; transform: translateX(0); }
       }
       @keyframes tokenLand {
-        0%   { transform: scale(1); }
-        30%  { transform: scale(1.7) translateY(-5px); }
-        55%  { transform: scale(0.85); }
-        75%  { transform: scale(1.15); }
+        0%   { transform: scale(1) translateY(0); }
+        25%  { transform: scale(1.6) translateY(-7px); }
+        55%  { transform: scale(0.88) translateY(0); }
+        75%  { transform: scale(1.12); }
         100% { transform: scale(1); }
       }
-      @keyframes tokenHop {
-        0%   { transform: scale(1) translateY(0); }
-        50%  { transform: scale(1.3) translateY(-4px); }
-        100% { transform: scale(1) translateY(0); }
-      }
-      @keyframes diceSpin {
-        0%   { transform: rotateY(0deg);   }
-        33%  { transform: rotateY(120deg); }
-        66%  { transform: rotateY(240deg); }
-        100% { transform: rotateY(360deg); }
-      }
       @keyframes diceShake {
-        0%,100% { transform: rotate(0deg); }
-        20%  { transform: rotate(-12deg) scale(1.1); }
-        40%  { transform: rotate(10deg)  scale(0.95); }
-        60%  { transform: rotate(-7deg)  scale(1.05); }
-        80%  { transform: rotate(5deg)   scale(1); }
+        0%,100% { transform: rotate(0deg) scale(1); }
+        15%  { transform: rotate(-15deg) scale(1.12); }
+        35%  { transform: rotate(12deg)  scale(0.94); }
+        55%  { transform: rotate(-8deg)  scale(1.06); }
+        75%  { transform: rotate(5deg)   scale(0.98); }
       }
-      @keyframes glowPulse {
-        0%,100% { box-shadow: 0 0 0 0 rgba(232,67,147,0); }
-        50%      { box-shadow: 0 0 0 5px rgba(232,67,147,0.2); }
+      @keyframes tileGlow {
+        0%,100% { box-shadow: 0 0 0 2px rgba(232,53,122,0.5); }
+        50%     { box-shadow: 0 0 0 4px rgba(232,53,122,0.25), 0 0 16px rgba(232,53,122,0.2); }
       }
       @keyframes jackpotPulse {
-        0%,100% { color: #f5a623; }
-        50%      { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        0%,100% { color: var(--gold); }
+        50%     { color: #f5a020; text-shadow: 0 0 14px rgba(245,160,32,0.55); }
       }
-      @keyframes newEntry {
-        from { background: rgba(34,211,163,0.18); }
-        to   { background: transparent; }
+      @keyframes glowPulse {
+        0%,100% { box-shadow: 0 4px 20px var(--shadow); }
+        50%     { box-shadow: 0 4px 30px rgba(22,136,74,0.35), 0 0 0 3px rgba(22,136,74,0.15); }
       }
       @keyframes pulse {
         0%,100% { opacity: 1; }
-        50%      { opacity: 0.55; }
+        50%     { opacity: 0.55; }
       }
-      @keyframes winnerShine {
-        0%   { background-position: -200% center; }
-        100% { background-position: 200% center; }
+      @keyframes shimmer {
+        from { background-position: -200% center; }
+        to   { background-position: 200% center; }
+      }
+      @keyframes bounceIn {
+        0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+        60%  { transform: scale(1.2) rotate(3deg); }
+        80%  { transform: scale(0.92); }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-B-t3qYAK.js"></script>
+    <script type="module" crossorigin src="/assets/index-BMwKf5_3.js"></script>
   </head>
   <body>
     <div id="root"></div>
