@@ -309,12 +309,8 @@ function handlePurchasableLanding(state, playerId, position, diceTotal) {
     const rentResult = (0, rentCalculation_1.calculateRent)(tile, player, state.tiles, diceTotal);
     if (!rentResult)
         return setPhase(state, 'end_turn');
-    return setPendingAction(state, {
-        type: 'pay_rent',
-        amount: rentResult.rentAmount,
-        toPlayerId: rentResult.ownerId,
-        tilePosition: position,
-    });
+    // Auto-pay rent immediately
+    return handlePayRent(state, playerId, rentResult.rentAmount, rentResult.ownerId);
 }
 // ─── Action handlers ─────────────────────────────────────────────────────────
 function handleBuyProperty(state, playerId) {

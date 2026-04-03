@@ -10,7 +10,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
-  const [notifications, setNotifications] = useState<string[]>([]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -28,10 +27,6 @@ export default function App() {
 
     socket.on('game:state_update', (state: GameState) => {
       setGameState(state);
-    });
-
-    socket.on('game:event', (message: string) => {
-      setNotifications((prev) => [...prev.slice(-4), message]);
     });
 
     socket.on('game:error', (message: string) => {
@@ -52,7 +47,6 @@ export default function App() {
       socket.off('disconnect');
       socket.off('connect_error');
       socket.off('game:state_update');
-      socket.off('game:event');
       socket.off('game:error');
       socket.off('game:reset');
     };
@@ -122,11 +116,6 @@ export default function App() {
   return (
     <div style={styles.appContainer}>
       {error && <div style={styles.errorBanner}>{error}</div>}
-      {notifications.length > 0 && (
-        <div style={styles.notificationBar}>
-          {notifications[notifications.length - 1]}
-        </div>
-      )}
       <Game
         gameState={gameState}
         myPlayerId={socket.id || ''}
@@ -186,20 +175,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     zIndex: 9999,
     fontWeight: 'bold',
-  },
-  notificationBar: {
-    position: 'fixed',
-    bottom: '1rem',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: '#0f3460',
-    color: 'white',
-    padding: '0.5rem 1rem',
-    borderRadius: '8px',
-    zIndex: 100,
-    maxWidth: '400px',
-    textAlign: 'center',
-    fontSize: '0.9rem',
   },
   appContainer: {
     width: '100%',

@@ -125,8 +125,19 @@
         80%  { transform: scale(0.92); }
         100% { transform: scale(1) rotate(0deg); opacity: 1; }
       }
+      @keyframes eventShow {
+        0%   { opacity: 0; transform: translateY(-10px) scale(0.95); }
+        8%   { opacity: 1; transform: translateY(2px) scale(1.03); }
+        14%  { transform: translateX(-5px) scale(1); }
+        20%  { transform: translateX(5px); }
+        26%  { transform: translateX(-3px); }
+        32%  { transform: translateX(3px); }
+        38%  { transform: translateX(0); }
+        78%  { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateY(-4px); }
+      }
     </style>
-    <script type="module" crossorigin src="/assets/index-BMwKf5_3.js"></script>
+    <script type="module" crossorigin src="/assets/index-7vTGssa7.js"></script>
   </head>
   <body>
     <div id="root"></div>

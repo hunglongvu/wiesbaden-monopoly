@@ -102,20 +102,20 @@ export const CHANCE_CARDS: Omit<ActionCard, 'id'>[] = [
   {
     deckType: 'chance',
     type: 'move_to',
-    position: 39,
+    position: 27,
     text: 'Fahre zum Schlossplatz',
   },
   {
     deckType: 'chance',
     type: 'move_to',
-    position: 5,
+    position: 4,
     text: 'Fahre zum Hauptbahnhof',
   },
   {
     deckType: 'chance',
     type: 'move_to',
-    position: 24,
-    text: 'Fahre in die Langgasse',
+    position: 20,
+    text: 'Fahre in die Goldgasse',
   },
   {
     deckType: 'chance',

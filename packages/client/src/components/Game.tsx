@@ -23,8 +23,8 @@ function useAnimationDone(players: GameState['players']) {
       const from = prevPos.current[p.id];
       const to   = p.position;
       if (from !== undefined && from !== to) {
-        const steps = (to - from + 40) % 40;
-        if (steps > 0 && steps <= 12) maxSteps = Math.max(maxSteps, steps);
+        const steps = (to - from + 28) % 28;
+        if (steps > 0 && steps <= 8) maxSteps = Math.max(maxSteps, steps);
       }
       prevPos.current[p.id] = to;
     });
@@ -48,6 +48,23 @@ function useWindowWidth() {
   return width;
 }
 
+function useFullscreen() {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const h = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', h);
+    return () => document.removeEventListener('fullscreenchange', h);
+  }, []);
+  const toggle = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+  return { isFullscreen, toggle };
+}
+
 export default function Game({ gameState, myPlayerId, socket }: Props) {
   const [showTrade,    setShowTrade]    = useState(false);
   const [showMortgage, setShowMortgage] = useState(false);
@@ -57,6 +74,7 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
 
   const isMobile   = useIsMobile();
   const windowWidth = useWindowWidth();
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   const { players, tiles, currentTurn, config } = gameState;
   const me      = players.find((p) => p.id === myPlayerId);
@@ -90,7 +108,7 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
   );
   const activePlayer = players.find((p) => p.id === currentTurn.playerId);
 
-  const BOARD_SIZE  = 838; // CORNER*2 + SIDE*9 + 10 (gap=1 × 11)
+  const BOARD_SIZE  = 643; // CORNER*2 + SIDE*6 + 7 (gap=1 × 7, 8 cols)
   const boardScale  = Math.min(1, (windowWidth - 8) / BOARD_SIZE);
 
   const modals = (
@@ -166,6 +184,13 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
               🅿 {gameState.jackpot.amount}€
             </div>
           )}
+          <button onClick={toggleFullscreen} title={isFullscreen ? 'Vollbild beenden' : 'Vollbild'} style={{
+            background: 'transparent', border: '1px solid #d0c4aa', borderRadius: 7,
+            width: 32, height: 32, cursor: 'pointer', fontSize: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            {isFullscreen ? '⊠' : '⊞'}
+          </button>
         </div>
 
         {/* Board */}
@@ -238,6 +263,18 @@ export default function Game({ gameState, myPlayerId, socket }: Props) {
           🏆 {players.find((p) => p.id === gameState.winner)?.name} gewinnt!
         </div>
       )}
+
+      {/* Fullscreen button (desktop) */}
+      <button onClick={toggleFullscreen} title={isFullscreen ? 'Vollbild beenden' : 'Vollbild'} style={{
+        position: 'fixed', top: 16, left: 16, zIndex: 400,
+        background: '#fff', border: '1px solid #d0c4aa', borderRadius: 9,
+        padding: '6px 12px', cursor: 'pointer', fontSize: 13,
+        fontFamily: 'inherit', fontWeight: 600, color: '#6b5a42',
+        boxShadow: '0 2px 8px rgba(26,20,12,0.1)',
+        display: 'flex', alignItems: 'center', gap: 5,
+      }}>
+        {isFullscreen ? '⊠ Verlassen' : '⊞ Vollbild'}
+      </button>
 
       {/* Trade badge */}
       {incomingTrades.length > 0 && !showTrade && (

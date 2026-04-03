@@ -1,7 +1,7 @@
 import { Player, GameState } from './types';
 import { BOARD_TILES } from '../config/board.config';
 
-export const BOARD_SIZE = 40;
+export const BOARD_SIZE = 28;
 
 export interface MovementResult {
   newPosition: number;
@@ -108,7 +108,7 @@ export function movePlayerTo(
  * Find the nearest railroad position ahead of current position.
  */
 export function findNearestRailroad(currentPosition: number): number {
-  const railroadPositions = [5, 15, 25, 35];
+  const railroadPositions = [4, 18];
   for (const pos of railroadPositions) {
     if (pos > currentPosition) {
       return pos;

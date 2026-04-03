@@ -1,5 +1,5 @@
 import { Player } from './types';
-export declare const BOARD_SIZE = 40;
+export declare const BOARD_SIZE = 28;
 export interface MovementResult {
     newPosition: number;
     passedGo: boolean;

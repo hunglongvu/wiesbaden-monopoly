@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GameState, Tile, PropertyTile, RailroadTile, UtilityTile, Player } from '../types';
 import { playStep } from '../sounds';
 
-const CORNER = 88;
-const SIDE   = 72;
-const BOARD  = CORNER * 2 + SIDE * 9;
+const CORNER = 90;
+const SIDE   = 76;
+const BOARD  = CORNER * 2 + SIDE * 6 + 7; // 8 cols: 2 corners + 6 sides + 7 gaps of 1px
 
 // Board colors
 const TILE_BG      = '#faf6ed';
@@ -36,25 +36,22 @@ const COLOR_LABEL: Record<string, string> = {
 };
 
 const TILE_EMOJI: Record<number, string> = {
-  0: '🏁', 1: '🏚️', 2: '📦', 3: '🏠', 4: '💸',
-  5: '🚂', 6: '🌊', 7: '❓', 8: '🌅', 9: '🌉',
-  10:'⚖️', 11:'🌸', 12:'⚡', 13:'🌺', 14:'🌼',
-  15:'🚆', 16:'🛒', 17:'📦', 18:'🍊', 19:'⛪',
-  20:'🅿️', 21:'🔴', 22:'❓', 23:'🥇', 24:'🛣️',
-  25:'🚃', 26:'👑', 27:'🏖️', 28:'🛁', 29:'⭐',
-  30:'👮', 31:'🌿', 32:'🏔️', 33:'📦', 34:'🏞️',
-  35:'🚊', 36:'❓', 37:'🏛️', 38:'💎', 39:'🏰',
+  0: '🏁',  1: '🏚️', 2: '📦',  3: '🏠',  4: '🚂',
+  5: '🌊',  6: '💸',  7: '⚖️', 8: '🌅',  9: '🌉',
+  10:'⚡', 11:'🌸', 12:'🌺', 13:'🌼', 14:'🅿️',
+  15:'🛒', 16:'📦', 17:'⛪', 18:'🚆', 19:'🔴',
+  20:'🥇', 21:'👮', 22:'❓', 23:'🌿', 24:'🏔️',
+  25:'🛁', 26:'🏛️', 27:'🏰',
 };
 
 const TILE_SHORT: Record<number, string> = {
-  0: 'Los', 1: 'Biebrich', 2: 'Gemein.', 3: 'Schierst.', 4: 'Steuer',
-  5: 'Hbf', 6: 'Wilhelm', 7: 'Ereignis', 8: 'Luisen', 9: 'Rhein',
-  10:'Besuch', 11:'Taunus', 12:'Stadtw.', 13:'Sonnenb.', 14:'Adolfs',
-  15:'Bf Biebr.', 16:'Markt', 17:'Gemein.', 18:'Friedrich', 19:'Kirche',
-  20:'Parken', 21:'Bleich', 22:'Ereignis', 23:'Gold', 24:'Lang',
-  25:'Bf Klar.', 26:'K-F-Ring', 27:'Rheinufer', 28:'Therme', 29:'Dernsches',
-  30:'Gefängnis', 31:'Nerotal', 32:'Neroberg', 33:'Gemein.', 34:'Reisinger',
-  35:'Bf Dotz.', 36:'Ereignis', 37:'Kurhaus', 38:'Luxusst.', 39:'Schloss',
+  0: 'Los',      1: 'Biebrich',  2: 'Gemein.',  3: 'Schierst.',
+  4: 'Hbf',      5: 'Wilhelm',   6: 'Steuer',   7: 'Besuch',
+  8: 'Luisen',   9: 'Rhein',    10: 'Stadtw.',  11: 'Taunus',
+  12:'Sonnenb.', 13:'Adolfs',   14:'Parken',    15:'Markt',
+  16:'Gemein.', 17:'Kirche',   18:'Bf Biebr.', 19:'Bleich',
+  20:'Gold',    21:'Gefängnis', 22:'Ereignis', 23:'Nerotal',
+  24:'Neroberg', 25:'Therme',  26:'Kurhaus',   27:'Schloss',
 };
 
 function getInitials(name: string): string {
@@ -64,29 +61,30 @@ function getInitials(name: string): string {
 }
 
 function gridPos(pos: number): { gridColumn: string; gridRow: string } {
-  if (pos === 0)  return { gridColumn: '11', gridRow: '11' };
-  if (pos <= 9)   return { gridColumn: `${11 - pos}`, gridRow: '11' };
-  if (pos === 10) return { gridColumn: '1', gridRow: '11' };
-  if (pos <= 19)  return { gridColumn: '1', gridRow: `${11 - (pos - 10)}` };
-  if (pos === 20) return { gridColumn: '1', gridRow: '1' };
-  if (pos <= 29)  return { gridColumn: `${pos - 19}`, gridRow: '1' };
-  if (pos === 30) return { gridColumn: '11', gridRow: '1' };
-  if (pos <= 39)  return { gridColumn: '11', gridRow: `${pos - 29}` };
-  return { gridColumn: '11', gridRow: '11' };
+  // 8×8 grid: corners at 0 (br), 7 (bl), 14 (tl), 21 (tr)
+  if (pos === 0)  return { gridColumn: '8', gridRow: '8' };   // Go (bottom-right)
+  if (pos <= 6)   return { gridColumn: `${8 - pos}`, gridRow: '8' }; // Bottom row
+  if (pos === 7)  return { gridColumn: '1', gridRow: '8' };   // Jail (bottom-left)
+  if (pos <= 13)  return { gridColumn: '1', gridRow: `${15 - pos}` }; // Left col
+  if (pos === 14) return { gridColumn: '1', gridRow: '1' };   // Free Parking (top-left)
+  if (pos <= 20)  return { gridColumn: `${pos - 13}`, gridRow: '1' }; // Top row
+  if (pos === 21) return { gridColumn: '8', gridRow: '1' };   // Go to Jail (top-right)
+  if (pos <= 27)  return { gridColumn: '8', gridRow: `${pos - 20}` }; // Right col
+  return { gridColumn: '8', gridRow: '8' };
 }
 
 function colorBarStyle(pos: number, color: string): React.CSSProperties {
   const base: React.CSSProperties = { position: 'absolute', background: color, zIndex: 1 };
-  if (pos >= 1  && pos <= 9)  return { ...base, top: 0, left: 0, right: 0, height: 14 };
-  if (pos >= 11 && pos <= 19) return { ...base, top: 0, right: 0, bottom: 0, width: 14 };
-  if (pos >= 21 && pos <= 29) return { ...base, bottom: 0, left: 0, right: 0, height: 14 };
-  if (pos >= 31 && pos <= 39) return { ...base, top: 0, left: 0, bottom: 0, width: 14 };
+  if (pos >= 1  && pos <= 6)  return { ...base, top: 0, left: 0, right: 0, height: 14 };   // bottom row → bar at top
+  if (pos >= 8  && pos <= 13) return { ...base, top: 0, right: 0, bottom: 0, width: 14 };  // left col → bar at right
+  if (pos >= 15 && pos <= 20) return { ...base, bottom: 0, left: 0, right: 0, height: 14 }; // top row → bar at bottom
+  if (pos >= 22 && pos <= 27) return { ...base, top: 0, left: 0, bottom: 0, width: 14 };   // right col → bar at left
   return { ...base, top: 0, left: 0, right: 0, height: 8 };
 }
 
 function tileSize(pos: number): React.CSSProperties {
-  const isCorner    = pos === 0 || pos === 10 || pos === 20 || pos === 30;
-  const isLeftRight = (pos >= 11 && pos <= 19) || (pos >= 31 && pos <= 39);
+  const isCorner    = pos === 0 || pos === 7 || pos === 14 || pos === 21;
+  const isLeftRight = (pos >= 8 && pos <= 13) || (pos >= 22 && pos <= 27);
   if (isCorner)    return { width: CORNER, height: CORNER };
   return isLeftRight ? { width: CORNER, height: SIDE } : { width: SIDE, height: CORNER };
 }
@@ -109,8 +107,8 @@ function useAnimatedPositions(players: Player[]) {
       }
       if (from === to || animating.current.has(player.id)) return;
       prevPos.current[player.id] = to;
-      const steps = (to - from + 40) % 40;
-      if (steps === 0 || steps > 12) {
+      const steps = (to - from + 28) % 28;
+      if (steps === 0 || steps > 8) {
         setDisplayPos((p) => ({ ...p, [player.id]: to }));
         setLandedId(player.id);
         setTimeout(() => setLandedId(null), 600);
@@ -120,7 +118,7 @@ function useAnimatedPositions(players: Player[]) {
       let step = 0;
       const tick = () => {
         step++;
-        const cur = (from + step) % 40;
+        const cur = (from + step) % 28;
         setDisplayPos((p) => ({ ...p, [player.id]: cur }));
         playStep();
         if (step < steps) {
@@ -384,7 +382,7 @@ function TileCell({
 }) {
   const pos       = tile.position;
   const sz        = tileSize(pos);
-  const isCorner  = pos === 0 || pos === 10 || pos === 20 || pos === 30;
+  const isCorner  = pos === 0 || pos === 7 || pos === 14 || pos === 21;
   const propColor = tile.type === 'property' ? COLOR_HEX[(tile as PropertyTile).color] : undefined;
   const ownerColor = (() => {
     const t = tile as PropertyTile | RailroadTile | UtilityTile;
@@ -507,18 +505,44 @@ function TileCell({
 
 // ── Board ─────────────────────────────────────────────────────────────────────
 
+function useEventToasts(eventLog: string[]) {
+  const [toasts, setToasts] = useState<{ id: number; text: string }[]>([]);
+  const prevLen = useRef(0);
+
+  useEffect(() => {
+    if (eventLog.length > prevLen.current) {
+      const newEvents = eventLog.slice(prevLen.current);
+      prevLen.current = eventLog.length;
+      setToasts((prev) => {
+        const next = [...prev];
+        newEvents.forEach((text) => {
+          const id = Date.now() + Math.random();
+          next.push({ id, text });
+          setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 5200);
+        });
+        return next.slice(-3); // keep max 3 visible at once
+      });
+    } else if (eventLog.length === 0) {
+      prevLen.current = 0;
+    }
+  }, [eventLog.length]); // eslint-disable-line
+
+  return toasts;
+}
+
 export default function Board({ gameState, myPlayerId }: { gameState: GameState; myPlayerId: string }) {
   const { tiles, players, currentTurn, jackpot } = gameState;
   const { displayPos, landedId } = useAnimatedPositions(players);
   const activePos = players.find((p) => p.id === currentTurn.playerId)?.position;
   const [selectedTile, setSelectedTile] = useState<Tile | null>(null);
+  const toasts = useEventToasts(gameState.eventLog);
 
   return (
     <>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `${CORNER}px repeat(9, ${SIDE}px) ${CORNER}px`,
-        gridTemplateRows:    `${CORNER}px repeat(9, ${SIDE}px) ${CORNER}px`,
+        gridTemplateColumns: `${CORNER}px repeat(6, ${SIDE}px) ${CORNER}px`,
+        gridTemplateRows:    `${CORNER}px repeat(6, ${SIDE}px) ${CORNER}px`,
         width: BOARD, height: BOARD,
         background: BOARD_BG,
         border: `3px solid ${BOARD_BG}`,
@@ -539,26 +563,28 @@ export default function Board({ gameState, myPlayerId }: { gameState: GameState;
 
         {/* Center */}
         <div style={{
-          gridColumn: '2 / 11', gridRow: '2 / 11',
+          gridColumn: '2 / 8', gridRow: '2 / 8',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: 14,
           background: '#f5f0e6',
           padding: 20,
         }}>
-          {/* Latest event */}
-          {gameState.eventLog.length > 0 && (
-            <div key={gameState.eventLog.length} style={{
-              fontSize: 12, fontWeight: 600,
-              color: '#16884a', textAlign: 'center',
-              animation: 'slideDown 0.3s ease both',
-              maxWidth: 270, lineHeight: 1.5,
-              background: '#16884a14',
-              border: '1px solid #16884a30',
-              borderRadius: 10, padding: '7px 14px',
-            }}>
-              {gameState.eventLog[gameState.eventLog.length - 1]}
-            </div>
-          )}
+          {/* Event toasts */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, width: '100%', maxWidth: 250 }}>
+            {toasts.map((t) => (
+              <div key={t.id} style={{
+                fontSize: 11, fontWeight: 600,
+                color: '#16884a', textAlign: 'center',
+                animation: 'eventShow 5s ease both',
+                lineHeight: 1.4,
+                background: '#16884a14',
+                border: '1px solid #16884a30',
+                borderRadius: 9, padding: '6px 12px',
+              }}>
+                {t.text}
+              </div>
+            ))}
+          </div>
 
           {/* Title */}
           <div style={{ textAlign: 'center' }}>

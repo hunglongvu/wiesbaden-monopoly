@@ -6,7 +6,7 @@ exports.movePlayer = movePlayer;
 exports.movePlayerTo = movePlayerTo;
 exports.findNearestRailroad = findNearestRailroad;
 exports.moveBack = moveBack;
-exports.BOARD_SIZE = 40;
+exports.BOARD_SIZE = 28;
 /**
  * Calculate movement result for a player moving `steps` spaces.
  * Handles wrapping around the board and GO detection.
@@ -83,7 +83,7 @@ function movePlayerTo(player, targetPosition, config, isExactLanding = false) {
  * Find the nearest railroad position ahead of current position.
  */
 function findNearestRailroad(currentPosition) {
-    const railroadPositions = [5, 15, 25, 35];
+    const railroadPositions = [4, 18];
     for (const pos of railroadPositions) {
         if (pos > currentPosition) {
             return pos;
