@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Socket } from 'socket.io-client';
 import { GameState, Tile, PropertyTile, RailroadTile, UtilityTile, Player } from '../types';
-import { playStep, playDiceRoll, playRentPay } from '../sounds';
+import { playStep } from '../sounds';
 
 const CORNER = 90;
 const SIDE   = 76;
@@ -504,160 +503,6 @@ function TileCell({
   );
 }
 
-// ── Center Action Components ──────────────────────────────────────────────────
-
-const DOT_GRID: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [[25, 75], [75, 25]],
-  3: [[25, 75], [50, 50], [75, 25]],
-  4: [[25, 25], [25, 75], [75, 25], [75, 75]],
-  5: [[25, 25], [25, 75], [50, 50], [75, 25], [75, 75]],
-  6: [[25, 25], [50, 25], [75, 25], [25, 75], [50, 75], [75, 75]],
-};
-
-function MiniDie({ value, rolling }: { value: number; rolling: boolean }) {
-  const dots = DOT_GRID[value] ?? DOT_GRID[1];
-  return (
-    <div style={{
-      width: 30, height: 30, background: '#fff',
-      borderRadius: 7, position: 'relative', flexShrink: 0,
-      border: '1px solid #d0c4aa',
-      boxShadow: '0 2px 6px rgba(26,20,12,0.1)',
-      animation: rolling ? 'diceShake 0.45s ease both' : 'none',
-    }}>
-      {dots.map(([top, left], i) => (
-        <div key={i} style={{
-          position: 'absolute', width: 5, height: 5, borderRadius: '50%',
-          background: '#1a1510', top: `${top}%`, left: `${left}%`,
-          transform: 'translate(-50%, -50%)',
-        }} />
-      ))}
-    </div>
-  );
-}
-
-function CenterActions({ gameState, myPlayerId, socket, onOpenTrade, onOpenMortgage }: {
-  gameState: GameState; myPlayerId: string; socket: Socket;
-  onOpenTrade: () => void; onOpenMortgage: () => void;
-}) {
-  const { currentTurn, players, config } = gameState;
-  const isMyTurn = currentTurn.playerId === myPlayerId;
-  const me = players.find((p) => p.id === myPlayerId);
-  const phase = currentTurn.phase;
-  const [rollingAnim, setRollingAnim] = useState(false);
-  const prevDice = useRef<[number, number] | undefined>(undefined);
-
-  useEffect(() => {
-    const d = currentTurn.diceRoll;
-    if (d && (d[0] !== prevDice.current?.[0] || d[1] !== prevDice.current?.[1])) {
-      prevDice.current = d;
-      setRollingAnim(true);
-      setTimeout(() => setRollingAnim(false), 500);
-    }
-  }, [currentTurn.diceRoll]); // eslint-disable-line
-
-  if (!me || me.isBankrupt) return null;
-
-  const activeName = players.find((p) => p.id === currentTurn.playerId)?.name;
-
-  const mainBtn = (color: string, label: string, onClick: () => void, disabled?: boolean) => (
-    <button onClick={onClick} disabled={disabled} style={{
-      width: '100%', padding: '9px 10px', border: 'none', borderRadius: 9,
-      background: disabled ? '#f5f0e6' : color,
-      color: disabled ? '#9e8e78' : '#fff',
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      fontWeight: 800, fontSize: 12, fontFamily: 'inherit',
-      boxShadow: disabled ? 'none' : `0 2px 8px ${color}55`,
-      transition: 'transform 0.1s',
-    }}
-    onMouseDown={(e) => { if (!disabled) e.currentTarget.style.transform = 'scale(0.96)'; }}
-    onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}>
-      {label}
-    </button>
-  );
-
-  return (
-    <div style={{ width: '100%', maxWidth: 210, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {/* Turn indicator */}
-      <div style={{
-        textAlign: 'center', fontSize: 11, fontWeight: 700, padding: '5px 10px',
-        borderRadius: 8,
-        background: isMyTurn ? '#e8357a14' : 'rgba(26,20,12,0.05)',
-        border: `1px solid ${isMyTurn ? '#e8357a44' : '#d0c4aa'}`,
-        color: isMyTurn ? '#e8357a' : '#9e8e78',
-      }}>
-        {isMyTurn ? '🎯 Du bist am Zug' : `⏳ ${activeName}`}
-      </div>
-
-      {/* Dice display */}
-      {currentTurn.diceRoll && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-          <MiniDie value={currentTurn.diceRoll[0]} rolling={rollingAnim} />
-          <span style={{ color: '#9e8e78', fontSize: 11 }}>+</span>
-          <MiniDie value={currentTurn.diceRoll[1]} rolling={rollingAnim} />
-          <span style={{ color: '#9e8e78', fontSize: 11 }}>=</span>
-          <div style={{
-            minWidth: 28, height: 28, borderRadius: 7,
-            background: currentTurn.isDoubles ? '#c47d0a' : '#f5f0e6',
-            border: `1px solid ${currentTurn.isDoubles ? '#c47d0a' : '#d0c4aa'}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 900,
-            color: currentTurn.isDoubles ? '#fff' : '#1a1510',
-          }}>
-            {currentTurn.diceRoll[0] + currentTurn.diceRoll[1]}
-          </div>
-          {currentTurn.isDoubles && (
-            <span style={{
-              fontSize: 9, fontWeight: 800, color: '#fff',
-              background: '#c47d0a', padding: '2px 5px', borderRadius: 5,
-            }}>PASCH</span>
-          )}
-        </div>
-      )}
-
-      {/* Roll dice */}
-      {isMyTurn && phase === 'waiting_for_roll' && !me.inJail &&
-        mainBtn('#e8357a', '🎲 Würfeln', () => { playDiceRoll(); socket.emit('game:roll_dice'); })}
-
-      {/* Jail options */}
-      {isMyTurn && phase === 'waiting_for_roll' && me.inJail && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <div style={{ fontSize: 10, color: '#c47d0a', fontWeight: 700, textAlign: 'center' }}>
-            🔒 Gefängnis – Versuch {me.jailTurns + 1}/3
-          </div>
-          {mainBtn('#2252c8', `💰 ${config.jailBuyoutCost}€ Kaution`,
-            () => { playRentPay(); socket.emit('game:pay_jail_fee'); },
-            me.money < config.jailBuyoutCost)}
-          {mainBtn('#e8357a', '🎲 Pasch würfeln', () => socket.emit('game:roll_for_jail'))}
-        </div>
-      )}
-
-      {/* End turn */}
-      {isMyTurn && phase === 'end_turn' &&
-        mainBtn('#16884a', '✓ Zug beenden', () => socket.emit('game:end_turn'))}
-
-      {/* Side buttons */}
-      <div style={{ display: 'flex', gap: 5 }}>
-        {[
-          { label: '🏦 Hypothek', onClick: onOpenMortgage },
-          { label: '🤝 Handel',   onClick: onOpenTrade   },
-        ].map(({ label, onClick }) => (
-          <button key={label} onClick={onClick} style={{
-            flex: 1, padding: '7px 4px', borderRadius: 8, border: '1px solid #d0c4aa',
-            background: '#f5f0e6', color: '#6b5a42', cursor: 'pointer',
-            fontSize: 10, fontWeight: 600, fontFamily: 'inherit',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#ede8dc')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#f5f0e6')}>
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Board ─────────────────────────────────────────────────────────────────────
 
 function useEventToasts(eventLog: string[]) {
@@ -685,10 +530,7 @@ function useEventToasts(eventLog: string[]) {
   return toasts;
 }
 
-export default function Board({ gameState, myPlayerId, socket, onOpenTrade, onOpenMortgage }: {
-  gameState: GameState; myPlayerId: string;
-  socket?: Socket; onOpenTrade?: () => void; onOpenMortgage?: () => void;
-}) {
+export default function Board({ gameState, myPlayerId }: { gameState: GameState; myPlayerId: string }) {
   const { tiles, players, currentTurn, jackpot } = gameState;
   const { displayPos, landedId } = useAnimatedPositions(players);
   const activePos = players.find((p) => p.id === currentTurn.playerId)?.position;
@@ -723,23 +565,18 @@ export default function Board({ gameState, myPlayerId, socket, onOpenTrade, onOp
         <div style={{
           gridColumn: '2 / 8', gridRow: '2 / 8',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', gap: socket ? 7 : 14,
-          background: '#f5f0e6',
-          padding: socket ? 10 : 20,
-          overflow: 'hidden',
+          justifyContent: 'center', gap: 10,
+          background: '#f5f0e6', padding: 16, overflow: 'hidden',
         }}>
           {/* Event toasts */}
           {toasts.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: socket ? 220 : 250 }}>
-              {toasts.slice(0, socket ? 2 : 3).map((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: 250 }}>
+              {toasts.map((t) => (
                 <div key={t.id} style={{
-                  fontSize: socket ? 9 : 11, fontWeight: 600,
-                  color: '#16884a', textAlign: 'center',
-                  animation: 'eventShow 5s ease both',
-                  lineHeight: 1.4,
-                  background: '#16884a14',
-                  border: '1px solid #16884a30',
-                  borderRadius: 9, padding: socket ? '4px 10px' : '6px 12px',
+                  fontSize: 11, fontWeight: 600, color: '#16884a', textAlign: 'center',
+                  animation: 'eventShow 5s ease both', lineHeight: 1.4,
+                  background: '#16884a12', border: '1px solid #16884a28',
+                  borderRadius: 9, padding: '5px 12px',
                 }}>
                   {t.text}
                 </div>
@@ -747,43 +584,28 @@ export default function Board({ gameState, myPlayerId, socket, onOpenTrade, onOp
             </div>
           )}
 
-          {/* Inline actions (mobile) */}
-          {socket && onOpenTrade && onOpenMortgage && (
-            <CenterActions
-              gameState={gameState} myPlayerId={myPlayerId} socket={socket}
-              onOpenTrade={onOpenTrade} onOpenMortgage={onOpenMortgage}
-            />
-          )}
-
-          {/* Title (desktop only) */}
-          {!socket && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontFamily: "'DM Serif Display', Georgia, serif",
-                fontSize: 32, fontWeight: 400, color: '#e8357a',
-                letterSpacing: '0.06em', lineHeight: 1,
-              }}>
-                WIESBADEN
-              </div>
-              <div style={{ fontSize: 9, color: '#9e8e78', letterSpacing: '0.5em', marginTop: 4, fontWeight: 600 }}>
-                MONOPOLY
-              </div>
+          {/* Title */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontFamily: "'DM Serif Display', Georgia, serif",
+              fontSize: 30, fontWeight: 400, color: '#e8357a',
+              letterSpacing: '0.06em', lineHeight: 1,
+            }}>WIESBADEN</div>
+            <div style={{ fontSize: 8, color: '#9e8e78', letterSpacing: '0.5em', marginTop: 3, fontWeight: 600 }}>
+              MONOPOLY
             </div>
-          )}
+          </div>
 
           {/* Jackpot */}
           {jackpot.amount > 0 && (
             <div style={{
-              background: '#fff8e8', border: '1px solid #d4a01244',
-              borderRadius: 9, padding: socket ? '5px 14px' : '8px 18px', textAlign: 'center',
+              background: '#fff8e8', border: '1px solid #d4a01240',
+              borderRadius: 10, padding: '7px 18px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: 8, color: '#9a7820', marginBottom: 2, fontWeight: 700, letterSpacing: '0.1em' }}>
-                🅿 JACKPOT
+              <div style={{ fontSize: 8, color: '#9a7820', marginBottom: 2, fontWeight: 700, letterSpacing: '0.12em' }}>
+                🅿 FREIPARKEN JACKPOT
               </div>
-              <div style={{
-                fontSize: socket ? 16 : 22, fontWeight: 900, color: '#c47d0a',
-                animation: 'jackpotPulse 2s ease-in-out infinite',
-              }}>
+              <div style={{ fontSize: 20, fontWeight: 900, color: '#c47d0a', animation: 'jackpotPulse 2s ease-in-out infinite' }}>
                 {jackpot.amount.toLocaleString('de-DE')}€
               </div>
             </div>
@@ -793,49 +615,46 @@ export default function Board({ gameState, myPlayerId, socket, onOpenTrade, onOp
           {gameState.gamePhase === 'finished' && (
             <div style={{
               background: '#f0fff4', border: '1px solid #16884a44',
-              borderRadius: 12, padding: '10px 22px', textAlign: 'center',
+              borderRadius: 12, padding: '10px 20px', textAlign: 'center',
               animation: 'glowPulse 1.5s ease-in-out infinite',
             }}>
               <div style={{ fontSize: 10, color: '#16884a', fontWeight: 700 }}>🏆 GEWINNER</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1a1510', marginTop: 2 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#1a1510', marginTop: 2 }}>
                 {players.find((p) => p.id === gameState.winner)?.name}
               </div>
             </div>
           )}
 
-          {/* Color swatches (desktop only) */}
-          {!socket && (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 260 }}>
-              {Object.entries(COLOR_HEX).map(([name, color]) => (
-                <div key={name} style={{
-                  width: 16, height: 16, borderRadius: 4,
-                  background: color, border: '1px solid rgba(26,20,12,0.15)',
-                }} title={name} />
-              ))}
-            </div>
-          )}
+          {/* Color swatches */}
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 240 }}>
+            {Object.entries(COLOR_HEX).map(([name, color]) => (
+              <div key={name} style={{
+                width: 14, height: 14, borderRadius: 3,
+                background: color, border: '1px solid rgba(26,20,12,0.12)',
+              }} title={name} />
+            ))}
+          </div>
 
-          {/* Players mini list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: socket ? 3 : 5, width: '100%', maxWidth: socket ? 200 : 210 }}>
+          {/* Players */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: 210 }}>
             {players.filter((p) => !p.isBankrupt).map((p) => {
               const isActive = p.id === currentTurn.playerId;
               return (
                 <div key={p.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: socket ? '3px 7px' : '5px 8px', borderRadius: 8,
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  padding: '4px 8px', borderRadius: 8,
                   background: isActive ? p.color + '18' : 'rgba(26,20,12,0.04)',
                   border: `1px solid ${isActive ? p.color + '44' : 'transparent'}`,
                   transition: 'all 0.3s',
                 }}>
                   <div style={{
-                    width: socket ? 8 : 10, height: socket ? 8 : 10, borderRadius: '50%', background: p.color,
+                    width: 9, height: 9, borderRadius: '50%', background: p.color, flexShrink: 0,
                     boxShadow: isActive ? `0 0 6px ${p.color}` : 'none',
-                    flexShrink: 0,
                   }} />
-                  <div style={{ flex: 1, fontSize: socket ? 9 : 10, fontWeight: isActive ? 700 : 500, color: TILE_TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ flex: 1, fontSize: 10, fontWeight: isActive ? 700 : 500, color: TILE_TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.name}
                   </div>
-                  <div style={{ fontSize: socket ? 9 : 10, fontWeight: 700, color: '#16884a', flexShrink: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#16884a', flexShrink: 0 }}>
                     {p.money.toLocaleString('de-DE')}€
                   </div>
                 </div>
